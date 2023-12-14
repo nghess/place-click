@@ -11,8 +11,7 @@ class gridMaze():
     def __init__(self, maze_bounds, maze_dims, contiguous=True):
         assert type(maze_bounds) == tuple or list, "Arena dims argument must be tuple or list"
         assert type(maze_dims) == tuple or list, "Maze dims argument must be tuple or list"
-        #assert maze_dims[0] >= 2, "Maze must be at least 2 rows tall."
-        #assert maze_dims[1] >= 3, "Maze must be at least 3 columns wide."
+
         self.bounds = maze_bounds
         self.shape = maze_dims
         
@@ -41,14 +40,6 @@ Test
 """
 test = gridMaze([1200,800], [6,4])
 canvas = np.zeros([800,1200,3], dtype=np.uint8)
-
-
-# Generate Maze
-try:
-    index = test.cells.index(value)
-    print(f"Found at index: {index}")
-except ValueError:
-    print(f"{value} not found in the list")
 
 # Draw
 
