@@ -15,15 +15,49 @@ class gridMaze():
         #assert maze_dims[1] >= 3, "Maze must be at least 3 columns wide."
         self.bounds = maze_bounds
         self.shape = maze_dims
-        self.cellsize = maze_bounds[0] // maze_dims[0]
+        
+        cellsize_x = maze_bounds[0] // maze_dims[0]
+        cellsize_y = maze_bounds[1] // maze_dims[1]
 
+
+        # Generate Grid
         xcoord = 0
         ycoord = 0
         coords = []
-        for ii in range(self.shape[0]):
-            coords.append([xcoord, ycoord])
-            xcoord += self.cellsize
-            for jj in range(self.shape[1]):
-                ycoord += self.cellsize
+        for x in range(self.shape[1]):
+            for y in range(self.shape[0]):
+                coords.append(([xcoord, ycoord],[xcoord+cellsize_x, ycoord+cellsize_y]))
+                xcoord += cellsize_x
+            ycoord += cellsize_y
+            xcoord = 0
+
+        self.cells = coords
 
 
+
+
+"""
+Test
+"""
+test = gridMaze([1200,800], [6,4])
+canvas = np.zeros([800,1200,3], dtype=np.uint8)
+
+
+# Generate Maze
+try:
+    index = test.cells.index(value)
+    print(f"Found at index: {index}")
+except ValueError:
+    print(f"{value} not found in the list")
+
+# Draw
+
+for ii in range(len(test.cells)):
+    cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255,255,255), thickness=2)
+
+#Pull out a single cell for neighbor testing
+cv2.rectangle(canvas, test.cells[8][0], test.cells[8][1], (255,0,0), thickness=-1)  # Cell 8
+
+cv2.imshow("grid", canvas)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
