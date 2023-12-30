@@ -14,8 +14,8 @@ def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 
 class gridMaze():
     def __init__(self, maze_bounds, maze_dims, std=10, sparsity=0, contiguous=True):
-        assert type(maze_bounds) == tuple or list, "Arena dims argument must be tuple or list"
-        assert type(maze_dims) == tuple or list, "Maze dims argument must be tuple or list"
+        assert isinstance(maze_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
+        assert isinstance(maze_dims, (tuple, list)), "Maze dims argument must be tuple or list."
 
         self.bounds = maze_bounds
         self.shape = maze_dims
@@ -49,8 +49,8 @@ class gridMaze():
                 self.density.append(cell)
 
         # Normalize    
-        self.density = self.density - min(self.density)
-        self.density = self.density / max(self.density)
+        self.density -= np.min(self.density)
+        self.density /= np.max(self.density)
         self.density -= sparsity
 
         # Generate target list based on probability density
