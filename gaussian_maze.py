@@ -68,9 +68,7 @@ test = gridMaze([1200,800], [24,16], std=50, sparsity=.3)
 canvas = np.zeros([800,1200,3], dtype=np.uint8)
 
 # Draw
-
 for ii in range(len(test.cells)):
-    #cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255,255,255), thickness=2)
 
     #Color cells by probability
     #density = test.density[ii]
