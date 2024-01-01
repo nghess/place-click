@@ -7,6 +7,11 @@ choose number of active cells
 set seed
 """
 
+
+def draw_circle(event,x,y,flags,param):
+    if event == cv2.EVENT_MOUSEMOVE:
+        cv2.circle(canvas,(x,y),5,(255,0,0),-1)
+
 def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 
     return 1 / (2 * np.pi * sigma_x * sigma_y) * np.exp(-((x - mu_x)**2 / (2 * sigma_x**2) + (y - mu_y)**2 / (2 * sigma_y**2)))
@@ -64,28 +69,34 @@ class gridMaze():
 Test
 """
 
-test = gridMaze([1200,800], [24,16], std=50, sparsity=.3)
+test = gridMaze([1200,800], [12,8], std=50, sparsity=.3)
 canvas = np.zeros([800,1200,3], dtype=np.uint8)
+draw = True
 
 # Draw
+while draw:
+    cv2.namedWindow('grid')
+    cv2.setMouseCallback('grid',draw_circle)
 
-for ii in range(len(test.cells)):
-    #cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255,255,255), thickness=2)
+    #draw_circle()
 
-    #Color cells by probability
-    #density = test.density[ii]
-    #cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255*density,0,0), thickness=-1)
+    for ii in range(len(test.cells)):
+        #cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255,255,255), thickness=2)
 
-    #Color cells by target status
-    target = test.targets[ii]
-    cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (int(255*target),0,0), thickness=-1)
+        #Color cells by probability
+        #density = test.density[ii]
+        #cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255*density,0,0), thickness=-1)
 
-    #Label x,y for sanity check purposes
-    #label = test.labels[ii]
-    #label_coord = (np.asarray(test.cells[ii][0]) + np.asarray(test.cells[ii][1])) // 2
-    #cv2.putText(canvas, label, label_coord, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=.3, color=(0,0,255))
+        #Color cells by target status
+        target = test.targets[ii]
+        cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (int(255*target),0,0), thickness=-1)
 
-cv2.imshow("grid", canvas)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+        #Label x,y for sanity check purposes
+        #label = test.labels[ii]
+        #label_coord = (np.asarray(test.cells[ii][0]) + np.asarray(test.cells[ii][1])) // 2
+        #cv2.putText(canvas, label, label_coord, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=.3, color=(0,0,255))
+
+    cv2.imshow("grid", canvas)
+    cv2.waitKey(16)
+    #cv2.destroyAllWindows()
 
