@@ -7,17 +7,17 @@ def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
     return 1 / (2 * np.pi * sigma_x * sigma_y) * np.exp(-((x - mu_x)**2 / (2 * sigma_x**2) + (y - mu_y)**2 / (2 * sigma_y**2)))
 
 class gridMaze():
-    def __init__(self, maze_bounds, maze_dims, std=10, sparsity=0, contiguous=True):
-        assert isinstance(maze_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
+    def __init__(self, pixel_bounds, maze_dims, std=10, sparsity=0, contiguous=True):
+        assert isinstance(pixel_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
         assert isinstance(maze_dims, (tuple, list)), "Maze dims argument must be tuple or list."
 
-        self.bounds = maze_bounds
+        self.bounds = pixel_bounds
         self.shape = maze_dims
         self.density = []
         self.labels = []
         
-        cellsize_x = maze_bounds[0] // maze_dims[0]
-        cellsize_y = maze_bounds[1] // maze_dims[1]
+        cellsize_x = pixel_bounds[0] // maze_dims[0]
+        cellsize_y = pixel_bounds[1] // maze_dims[1]
 
         # Define corners of each cell in pixel space
         xcoord = 0
