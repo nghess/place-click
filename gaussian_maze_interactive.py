@@ -19,53 +19,60 @@ def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 # Gaussian Maze class
 class gridMaze():
     def __init__(self, maze_bounds, maze_dims, std=10, sparsity=0):
+
         assert isinstance(maze_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
         assert isinstance(maze_dims, (tuple, list)), "Maze dims argument must be tuple or list."
 
+        # Grid properties
         self.bounds = maze_bounds
         self.shape = maze_dims
-        self.density = []
         self.labels = []
-        
-        cellsize_x = maze_bounds[0] // maze_dims[0]
-        cellsize_y = maze_bounds[1] // maze_dims[1]
+        self.cellsize_x = maze_bounds[0] // maze_dims[0]
+        self.cellsize_y = maze_bounds[1] // maze_dims[1]
 
-        # Define corners of each cell in pixel space
+        # Gaussian properties 
+        self.sparsity = sparsity
+        self.probability = []
+        self.std_dev = std
+
+        # Select random cell as focus of Gaussian
+        self.focus_x = np.random.randint(0,self.shape[1])
+        self.focus_y = np.random.randint(0,self.shape[0])
+
+        # Initialize cell coords
         xcoord = 0
         ycoord = 0
         coords = []
+
+        # Generate upper and lower corner pixel coordinates for each cell
         for x in range(self.shape[1]):
             for y in range(self.shape[0]):
-                coords.append(([xcoord, ycoord],[xcoord+cellsize_x, ycoord+cellsize_y]))
-                xcoord += cellsize_x
-            ycoord += cellsize_y
+                coords.append(([xcoord, ycoord],[xcoord+self.cellsize_x, ycoord+self.cellsize_y]))
+                xcoord += self.cellsize_x
+            ycoord += self.cellsize_y
             xcoord = 0
-
         self.cells = coords
-
-        # Select random cell as focus of Gaussian
-        focus_x = np.random.randint(0,self.shape[1])
-        focus_y = np.random.randint(0,self.shape[0])
 
         # Generate Gaussian
         for y in range(self.shape[1]):
             for x in range(self.shape[0]):
-                cell = gaussian_2d(x, y, mu_x=focus_x, mu_y=focus_y, sigma_x=std, sigma_y=std)
+                cell = gaussian_2d(x, y, mu_x=self.focus_x, mu_y=self.focus_y, sigma_x=std, sigma_y=std)
                 self.labels.append(f"{x},{y}")
-                self.density.append(cell)
+                self.probability.append(cell)
 
-        # Normalize    
-        self.density -= np.min(self.density)
-        self.density /= np.max(self.density)
-        self.density -= sparsity
+        # Normalize between 0 and 1, then adjust ceiling with sparsity param 
+        self.probability -= np.min(self.probability)
+        self.probability /= np.max(self.probability)
+        self.probability -= self.sparsity
 
-        # Generate target list based on probability density
-        self.targets = np.array(np.random.rand(len(self.density)))
-        self.targets = (self.targets <= self.density)
+        # Generate logical target list based on cell probability
+        self.targets = np.array(np.random.rand(len(self.probability)))
+        self.targets = (self.targets <= self.probability)
 
         # Generate visited targets list
         self.visited = [[] for item in range(len(self.targets))]
 
+    # Check current location of mouse against target list. Once target cell is visited, add to visited list.
     def check_location(self, m_loc):
         for ii in range(len(self.targets)):
             if self.cells[ii][0][0] < m_loc[0] < self.cells[ii][1][0]:
@@ -76,6 +83,11 @@ class gridMaze():
                         cell_center_y = (self.cells[ii][0][1] + self.cells[ii][1][1]) // 2
                         self.visited[ii] = cell_center_x, cell_center_y
 
+    def draw(self, canvas):
+        for ii in range(len(self.cells)):
+            target = self.targets[ii]
+            cv2.rectangle(canvas, self.cells[ii][0], self.cells[ii][1], (int(255*target),0,0), thickness=-1)
+
             
 """
 Test
@@ -84,35 +96,31 @@ Test
 # Generate maze and canvas
 maze = gridMaze([1200,800], [12,8], std=50, sparsity=.3)
 canvas = np.zeros([800,1200,3], dtype=np.uint8)
-draw = True
+maze.draw(canvas)
+realtime = True
 
 # Start mouse callbacks
 cv2.namedWindow('Gaussian Maze')
 cv2.setMouseCallback('Gaussian Maze', mouse_loc)
 
-# Draw
-while draw:
-    for ii in range(len(maze.cells)):
+# Draw Realtime updates
+while realtime:
 
-        # Color cells by target status
-        target = maze.targets[ii]
-        cv2.rectangle(canvas, maze.cells[ii][0], maze.cells[ii][1], (int(255*target),0,0), thickness=-1)  
-        
-        # Check if mouse is inside a target rectangle
-        maze.check_location(m_loc)
+    # Check if mouse is inside a target rectangle
+    maze.check_location(m_loc)
 
     # Mark visited targets
+    cell_radius = maze.cellsize_x // 2
     for ii in range(len(maze.visited)):
                 if np.sum(maze.visited[ii]) > 0:
-                    cv2.circle(canvas, maze.visited[ii], int(50*maze.density[ii]), (0,0,255), thickness=-1)
+                    cv2.rectangle(canvas, maze.cells[ii][0], maze.cells[ii][1], (0,0,0), thickness=-1)  
+                    cv2.circle(canvas, maze.visited[ii], int(cell_radius*maze.probability[ii]), (0,0,255), thickness=-1)
     
-    # Current mouse location
-    cv2.putText(canvas, f"{m_loc[0]},{m_loc[1]}", (m_loc[0]+20,m_loc[1]+20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=.3, color=(255,255,255))
-
     # If targets have all been visited, generate new maze.
     if np.mean(maze.targets) == 0:
         maze = gridMaze([1200,800], [12,8], std=50, sparsity=.3)
-            
+        maze.draw(canvas)
+
     cv2.imshow("Gaussian Maze", canvas)
     if cv2.waitKey(1) == ord('q'):
         break
