@@ -15,6 +15,7 @@ def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 
     return 1 / (2 * np.pi * sigma_x * sigma_y) * np.exp(-((x - mu_x)**2 / (2 * sigma_x**2) + (y - mu_y)**2 / (2 * sigma_y**2)))
 
+
 # Gaussian Maze class
 class gridMaze():
     def __init__(self, maze_bounds, maze_dims, std=10, sparsity=0):
@@ -42,7 +43,7 @@ class gridMaze():
 
         self.cells = coords
 
-        # Set this to mouse click or random
+        # Select random cell as focus of Gaussian
         focus_x = np.random.randint(0,self.shape[1])
         focus_y = np.random.randint(0,self.shape[0])
 
@@ -74,7 +75,6 @@ class gridMaze():
                         cell_center_x = (self.cells[ii][0][0] + self.cells[ii][1][0]) // 2
                         cell_center_y = (self.cells[ii][0][1] + self.cells[ii][1][1]) // 2
                         self.visited[ii] = cell_center_x, cell_center_y
-
 
             
 """
