@@ -4,15 +4,14 @@ import numpy as np
 
 # Get mouse location with cv2 mouse events
 m_loc = [0,0]
-
 def mouse_loc(event, x, y, flags, param):
     if event == cv2.EVENT_MOUSEMOVE:
         m_loc[0] = x
         m_loc[1] = y
 
+
 # 2d Gaussian helper function
 def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
-
     return 1 / (2 * np.pi * sigma_x * sigma_y) * np.exp(-((x - mu_x)**2 / (2 * sigma_x**2) + (y - mu_y)**2 / (2 * sigma_y**2)))
 
 
@@ -32,7 +31,7 @@ class gridMaze():
 
         # Gaussian properties 
         self.sparsity = sparsity
-        self.probability = []
+        self.probabilities = []
         self.std_dev = std
 
         # Select random cell as focus of Gaussian
@@ -58,19 +57,20 @@ class gridMaze():
             for x in range(self.shape[0]):
                 cell = gaussian_2d(x, y, mu_x=self.focus_x, mu_y=self.focus_y, sigma_x=std, sigma_y=std)
                 self.labels.append(f"{x},{y}")
-                self.probability.append(cell)
+                self.probabilities.append(cell)
 
-        # Normalize between 0 and 1, then adjust ceiling with sparsity param 
-        self.probability -= np.min(self.probability)
-        self.probability /= np.max(self.probability)
-        self.probability -= self.sparsity
+        # Normalize probabilities between 0 and 1, then adjust ceiling probabilities with sparsity param 
+        self.probabilities -= np.min(self.probabilities)
+        self.probabilities /= np.max(self.probabilities)
+        self.probabilities -= self.sparsity
 
-        # Generate logical target list based on cell probability
-        self.targets = np.array(np.random.rand(len(self.probability)))
-        self.targets = (self.targets <= self.probability)
+        # Generate logical target list based on cell probabilities
+        self.targets = np.array(np.random.rand(len(self.probabilities)))
+        self.targets = (self.targets <= self.probabilities)
 
-        # Generate visited targets list
+        # Generate visited targets and visitation path list
         self.visited = [[] for item in range(len(self.targets))]
+        self.path = []
 
     # Check current location of mouse against target list. Once target cell is visited, add to visited list.
     def check_location(self, m_loc):
@@ -82,15 +82,18 @@ class gridMaze():
                         cell_center_x = (self.cells[ii][0][0] + self.cells[ii][1][0]) // 2
                         cell_center_y = (self.cells[ii][0][1] + self.cells[ii][1][1]) // 2
                         self.visited[ii] = cell_center_x, cell_center_y
+                        self.path.append([self.visited[ii], ii])
 
     def draw(self, canvas):
         for ii in range(len(self.cells)):
             target = self.targets[ii]
             cv2.rectangle(canvas, self.cells[ii][0], self.cells[ii][1], (int(255*target),0,0), thickness=-1)
 
-            
+
 """
-Test
+Gaussian maze and interactive visualization.
+Target cells are marked as blue. Explore the maze with your mouse.
+Once all targets are visited, a new maze is generated.
 """
 
 # Generate maze and canvas
@@ -114,7 +117,12 @@ while realtime:
     for ii in range(len(maze.visited)):
                 if np.sum(maze.visited[ii]) > 0:
                     cv2.rectangle(canvas, maze.cells[ii][0], maze.cells[ii][1], (0,0,0), thickness=-1)  
-                    cv2.circle(canvas, maze.visited[ii], int(cell_radius*maze.probability[ii]), (0,0,255), thickness=-1)
+                    cv2.circle(canvas, maze.visited[ii], int(cell_radius*maze.probabilities[ii]), (0,0,255), thickness=-1)
+
+    # Draw path
+    if len(maze.path) >= 2:
+        for ii in range(len(maze.path)-1):
+            cv2.line(canvas, (maze.path[ii][0]), (maze.path[ii+1][0]), (255,255,255))
     
     # If targets have all been visited, generate new maze.
     if np.mean(maze.targets) == 0:
@@ -124,5 +132,3 @@ while realtime:
     cv2.imshow("Gaussian Maze", canvas)
     if cv2.waitKey(1) == ord('q'):
         break
-
-
