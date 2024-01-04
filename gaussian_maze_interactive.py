@@ -38,7 +38,7 @@ class gridMaze():
         self.focus_x = np.random.randint(0,self.shape[1])
         self.focus_y = np.random.randint(0,self.shape[0])
 
-        # Initialize cell coords
+        # Initialize cell coordinates
         xcoord = 0
         ycoord = 0
         coords = []
@@ -59,7 +59,7 @@ class gridMaze():
                 self.labels.append(f"{x},{y}")
                 self.probabilities.append(cell)
 
-        # Normalize probabilities between 0 and 1, then adjust ceiling probabilities with sparsity param 
+        # Normalize probabilities between 0 and 1, then adjust all probabilities with sparsity param 
         self.probabilities -= np.min(self.probabilities)
         self.probabilities /= np.max(self.probabilities)
         self.probabilities -= self.sparsity
@@ -68,7 +68,7 @@ class gridMaze():
         self.targets = np.array(np.random.rand(len(self.probabilities)))
         self.targets = (self.targets <= self.probabilities)
 
-        # Generate visited targets and visitation path list
+        # Initialize visited targets list and visitation path list
         self.visited = [[] for item in range(len(self.targets))]
         self.path = []
 
@@ -82,7 +82,7 @@ class gridMaze():
                         cell_center_x = (self.cells[ii][0][0] + self.cells[ii][1][0]) // 2
                         cell_center_y = (self.cells[ii][0][1] + self.cells[ii][1][1]) // 2
                         self.visited[ii] = cell_center_x, cell_center_y
-                        self.path.append([self.visited[ii], ii])
+                        self.path.append([self.visited[ii], ii])  # Center of target cell visited, and its index
 
     def draw(self, canvas):
         for ii in range(len(self.cells)):
