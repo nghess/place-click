@@ -17,17 +17,17 @@ def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 
 # Gaussian Maze class
 class gridMaze():
-    def __init__(self, maze_bounds, maze_dims, std=10, sparsity=0):
+    def __init__(self, px_bounds, grid_dims, std=10, sparsity=0):
 
-        assert isinstance(maze_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
-        assert isinstance(maze_dims, (tuple, list)), "Maze dims argument must be tuple or list."
+        assert isinstance(px_bounds, (tuple, list)), "Arena dims argument must be tuple or list."
+        assert isinstance(grid_dims, (tuple, list)), "Maze dims argument must be tuple or list."
 
         # Grid properties
-        self.bounds = maze_bounds
-        self.shape = maze_dims
+        self.bounds = px_bounds
+        self.shape = grid_dims
         self.labels = []
-        self.cellsize_x = maze_bounds[0] // maze_dims[0]
-        self.cellsize_y = maze_bounds[1] // maze_dims[1]
+        self.cellsize_x = px_bounds[0] // grid_dims[0]
+        self.cellsize_y = px_bounds[1] // grid_dims[1]
 
         # Gaussian properties 
         self.sparsity = sparsity
@@ -97,7 +97,7 @@ Once all targets are visited, a new maze is generated.
 """
 
 # Generate maze and canvas
-maze = gridMaze([1200,800], [12,8], std=50, sparsity=.3)
+maze = gridMaze([1200,800], [12,8], std=20, sparsity=.3)
 canvas = np.zeros([800,1200,3], dtype=np.uint8)
 maze.draw(canvas)
 realtime = True
