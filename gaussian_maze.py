@@ -49,7 +49,6 @@ class gridMaze():
         self.density -= sparsity
 
         # Generate target list based on probability density
-
         self.targets = np.array(np.random.rand(len(self.density)))
         self.targets = (self.targets <= self.density)
             
