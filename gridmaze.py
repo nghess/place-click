@@ -33,18 +33,20 @@ class gridMaze():
         self.cells = coords
 
 
+
+
 """
 Test
 """
-test = gridMaze([1200,500], [12,5])
-canvas = np.zeros([500,1200,3], dtype=np.uint8)
+test = gridMaze([1200,800], [6,4])
+canvas = np.zeros([800,1200,3], dtype=np.uint8)
 
 # Draw
 
 for ii in range(len(test.cells)):
     cv2.rectangle(canvas, test.cells[ii][0], test.cells[ii][1], (255,255,255), thickness=2)
 
-# Pull out a single cell for neighbor testing
+#Pull out a single cell for neighbor testing
 cv2.rectangle(canvas, test.cells[8][0], test.cells[8][1], (255,0,0), thickness=-1)  # Cell 8
 
 cv2.imshow("grid", canvas)

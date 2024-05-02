@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.8.1"
+<WorkflowBuilder Version="2.8.0"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
                  xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
@@ -63,7 +63,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>S:\clickbait\test.mp4</cv:FileName>
+          <cv:FileName>C:\Git Repos\place-click\video\test.mp4</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -80,9 +80,11 @@
         <Combinator xsi:type="rx:Zip" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Visualizer</ipy:Name>
         <ipy:Script>import clr
 clr.AddReference("OpenCV.Net")
 from OpenCV.Net import *
+import math
 
 centroid_color = Scalar.Rgb(255,255,0)
 centroid_radius = 10
@@ -92,12 +94,84 @@ centroid_radius = 10
 @returns(IplImage)
 def process(value):
 
-  image = value.Item2
-  centroid_x = value.Item1.Item1
-  centroid_y = value.Item1.Item2
-
-  CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
+  image = value.Item3
+  centroid_x = value.Item1
+  centroid_y = value.Item2
+  if not math.isnan(centroid_x):
+    CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
   return image</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Task</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+clr.AddReference("System")
+from System import Array, Byte
+from OpenCV.Net import *
+import math
+
+centroid_color = Scalar.Rgb(255,255,0)
+grid_color = Scalar.Rgb(255,255,255)
+centroid_radius = 10
+
+
+# Class to generate maze coordinates
+class gridMaze():
+    def __init__(self, maze_bounds, maze_dims, contiguous=True):
+        assert type(maze_bounds) == tuple or list, "Arena dims argument must be tuple or list"
+        assert type(maze_dims) == tuple or list, "Maze dims argument must be tuple or list"
+
+        self.bounds = maze_bounds
+        self.shape = maze_dims
+        #self.canvas = Array.CreateInstance(IplImage, maze_dims[1], maze_dims[0], 3)
+        
+        cellsize_x = maze_bounds[0] // maze_dims[0]
+        cellsize_y = maze_bounds[1] // maze_dims[1]
+
+        # Generate Grid
+        xcoord = 0
+        ycoord = 0
+        coords = []
+
+        for x in range(self.shape[1]):
+            for y in range(self.shape[0]):
+                coords.append((Point(xcoord, ycoord), Point(xcoord+cellsize_x, ycoord+cellsize_y)))
+                xcoord += cellsize_x
+            ycoord += cellsize_y
+            xcoord = 0
+
+        self.cells = coords
+
+def drawGrid(grid, image):
+  for ii in range(len(grid.cells)):
+      CV.Rectangle(image, grid.cells[ii][0], grid.cells[ii][1], grid_color, thickness=2)
+  #Pull out a single cell for neighbor testing
+  CV.Rectangle(image, grid.cells[3][0], grid.cells[3][1], Scalar.Rgb(255,0,0), thickness=-1)  # Cell 8
+
+# Generate grid maze
+grid = gridMaze([1200,500], [12,5])
+
+
+@returns(IplImage)
+def process(value):
+
+  image = value.Item3
+  centroid_x = value.Item1
+  centroid_y = value.Item2
+
+  # Visualize target location
+  drawGrid(grid, image)
+  
+  # Update mouse location
+  if not math.isnan(centroid_x):
+    CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
+
+  return image
+
+
+
+
+</ipy:Script>
       </Expression>
     </Nodes>
     <Edges>
@@ -114,6 +188,7 @@ def process(value):
       <Edge From="8" To="10" Label="Source2" />
       <Edge From="9" To="10" Label="Source3" />
       <Edge From="10" To="11" Label="Source1" />
+      <Edge From="10" To="12" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
