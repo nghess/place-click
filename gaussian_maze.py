@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 
+
 def gaussian_2d(x, y, mu_x=0, mu_y=0, sigma_x=5, sigma_y=5):
 
     return 1 / (2 * np.pi * sigma_x * sigma_y) * np.exp(-((x - mu_x)**2 / (2 * sigma_x**2) + (y - mu_y)**2 / (2 * sigma_y**2)))
