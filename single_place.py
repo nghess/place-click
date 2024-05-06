@@ -1,53 +1,56 @@
 import cv2
 import numpy as np
 
-'''
+"""
 Functions
-'''
-# Generate target list
+"""
+
+# Generate target list (every grid cell in shuffled order)
 def generate_targets(maze):
     targets =  np.random.permutation(len(maze.cells))
     return targets
 
 # Get mouse location with cv2 mouse events
 def mouse_loc(event, x, y, flags, param):
+    global trial_state  # Declare that we will use the global trial_state
     if event == cv2.EVENT_MOUSEMOVE:
         m_loc[0] = x
         m_loc[1] = y
+    if event == cv2.EVENT_LBUTTONDOWN:
+        trial_state = True
+        print(f"Next trial!")
 
-def check_loc(targets, m_loc_current, m_loc_prev, maze):
+# Mouse location/event monitor function. To be run every frame.
+def check_loc(targets, m_loc_current, m_loc_prev, maze, trial_state=True):
 
     target = targets[1]
     found = False
     block_finished = False
 
-    if len(targets) > 0:
+    if len(targets) > 0 and trial_state == True:
         if maze.cells[target][0][0] < m_loc_current[0] < maze.cells[target][1][0]:
             if maze.cells[target][0][1] < m_loc_current[1] < maze.cells[target][1][1]:
                 if m_loc_prev[0] <= m_loc_current[0] >= + m_loc_prev[0]:
                     if m_loc_prev[1] <= m_loc_current[1] >= + m_loc_prev[1]:
-                        targets = targets[1:]  #Remove target if visited
-                        found = True
-                        print('Found!')
-                        return targets, found, block_finished
+                        targets = targets[1:]  # Remove target if visited
+                        found = True  # Record success (add timestamp)
+                        trial_state = False  # Suspend trial state while mouse gets water
+                        print('Target found! Wait for poke to begin next trial.')
+                        return targets, found, block_finished, trial_state
     
     elif len(targets) == 0:
+        print("Block complete!")
         block_finished = True
 
-    #print("Searching...")
-    return targets, found, block_finished
-
-
-            
+    return targets, found, block_finished, trial_state
+         
 
 """
 Draw equally spaced grid within bounds
-Choose number of active cells
-Set seed
 """
 
 class gridMaze():
-    def __init__(self, maze_bounds, maze_dims, contiguous=True):
+    def __init__(self, maze_bounds, maze_dims):
         assert type(maze_bounds) == tuple or list, "Arena dims argument must be tuple or list"
         assert type(maze_dims) == tuple or list, "Maze dims argument must be tuple or list"
 
@@ -72,7 +75,7 @@ class gridMaze():
 
 
 """
-Test
+Start Code
 """
 # Generate Maze
 maze = gridMaze([1200,500], [12,5])
@@ -87,6 +90,7 @@ def draw_grid(canvas):
 # Initialize block
 targets = generate_targets(maze)
 block_finished = False
+trial_state = True
 m_loc = [1,1]
 m_loc_prev = [1,1]
 loc_history = [[1,1]]
@@ -95,11 +99,13 @@ loc_history = [[1,1]]
 print(m_loc[0])
 print(f"target cell = {targets[1]}: {maze.cells[targets[1]][0][0]},{maze.cells[targets[1]][1][0]}")
 
-
-
 # Start mouse callbacks
 cv2.namedWindow('Clickbait')
 cv2.setMouseCallback('Clickbait', mouse_loc)
+
+"""
+Update Code
+"""
 
 # Run block
 while True:
@@ -107,13 +113,13 @@ while True:
     arena = draw_grid(maze)
 
     # Pull out a single cell for neighbor testing
-    targets, found, block_finished = check_loc(targets, m_loc, m_loc_prev, maze)
+    targets, found, block_finished, trial_state = check_loc(targets, m_loc, m_loc_prev, maze, trial_state)
 
     # Store previous mouse location
     loc_history.append(m_loc)
 
     # Set window of mouse location history
-    loc_window = 100
+    loc_window = 10
 
     if len(loc_history) >= loc_window:
         loc_history = loc_history[:-1]
@@ -125,7 +131,7 @@ while True:
     # Update m_loc_prev with the mean coordinates
     m_loc_prev = [mean_x, mean_y]
     
-    print(f"{m_loc}, {m_loc_prev}")
+    #print(f"{m_loc}, {m_loc_prev}")
 
 
     cv2.rectangle(arena, maze.cells[targets[1]][0], maze.cells[targets[1]][1], (255,0,0), thickness=-1)  # Cell 8
