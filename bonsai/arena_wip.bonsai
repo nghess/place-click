@@ -2,13 +2,22 @@
 <WorkflowBuilder Version="2.8.1"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xmlns:spk="clr-namespace:Bonsai.Spinnaker;assembly=Bonsai.Spinnaker"
-                 xmlns:p1="clr-namespace:OpenCV.Net;assembly=OpenCV.Net"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
-                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:ipy="clr-namespace:Bonsai.Scripting.IronPython;assembly=Bonsai.Scripting.IronPython"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns="https://bonsai-rx.org/2018/workflow">
   <Workflow>
     <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>2</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="IntProperty">
+          <Value>2</Value>
+        </Combinator>
+      </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="spk:SpinnakerCapture">
           <spk:Index>0</spk:Index>
@@ -17,55 +26,54 @@
       </Expression>
       <Expression xsi:type="MemberSelector">
         <Selector>Image</Selector>
-        <TypeMapping xsi:type="TypeMapping" TypeArguments="p1:IplImage" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>D:\place-click\video\blank.mp4</cv:FileName>
-          <cv:Suffix>None</cv:Suffix>
-          <cv:Buffered>true</cv:Buffered>
-          <cv:Overwrite>false</cv:Overwrite>
-          <cv:FourCC>FMP4</cv:FourCC>
-          <cv:FrameRate>30</cv:FrameRate>
-          <cv:FrameSize>
-            <cv:Width>0</cv:Width>
-            <cv:Height>0</cv:Height>
-          </cv:FrameSize>
-          <cv:ResizeInterpolation>NearestNeighbor</cv:ResizeInterpolation>
+        <Combinator xsi:type="cv:Crop">
+          <cv:RegionOfInterest>
+            <cv:X>30</cv:X>
+            <cv:Y>355</cv:Y>
+            <cv:Width>1345</cv:Width>
+            <cv:Height>530</cv:Height>
+          </cv:RegionOfInterest>
         </Combinator>
-      </Expression>
-      <Expression xsi:type="Disable">
-        <Builder xsi:type="Combinator">
-          <Combinator xsi:type="cv:ConvertColor">
-            <cv:Conversion>Bgr2Hsv</cv:Conversion>
-          </Combinator>
-        </Builder>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="cv:HsvThreshold">
-          <cv:Lower>
-            <cv:Val0>0</cv:Val0>
-            <cv:Val1>107</cv:Val1>
-            <cv:Val2>208</cv:Val2>
-            <cv:Val3>0</cv:Val3>
-          </cv:Lower>
-          <cv:Upper>
-            <cv:Val0>33</cv:Val0>
-            <cv:Val1>255</cv:Val1>
-            <cv:Val2>255</cv:Val2>
-            <cv:Val3>0</cv:Val3>
-          </cv:Upper>
+        <Combinator xsi:type="cv:Smooth">
+          <cv:SmoothType>Gaussian</cv:SmoothType>
+          <cv:Size1>27</cv:Size1>
+          <cv:Size2>27</cv:Size2>
+          <cv:Sigma1>20</cv:Sigma1>
+          <cv:Sigma2>20</cv:Sigma2>
         </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Threshold">
+          <cv:ThresholdValue>75</cv:ThresholdValue>
+          <cv:MaxValue>255</cv:MaxValue>
+          <cv:ThresholdType>Binary</cv:ThresholdType>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+from OpenCV.Net import *
+import math
+
+@returns(IplImage)
+def process(value):
+
+  image = 255-value
+  return image</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:FindContours">
           <cv:Mode>External</cv:Mode>
-          <cv:Method>ChainApproxNone</cv:Method>
+          <cv:Method>ChainApproxSimple</cv:Method>
           <cv:Offset>
             <cv:X>0</cv:X>
             <cv:Y>0</cv:Y>
           </cv:Offset>
-          <cv:MinArea>500</cv:MinArea>
+          <cv:MinArea>5</cv:MinArea>
           <cv:MaxArea xsi:nil="true" />
         </Combinator>
       </Expression>
@@ -88,31 +96,31 @@
         <Combinator xsi:type="rx:Zip" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Visualizer</ipy:Name>
+        <ipy:Name>Visualize Centroid</ipy:Name>
         <ipy:Script>import clr
 clr.AddReference("OpenCV.Net")
 from OpenCV.Net import *
 import math
 
-centroid_color = Scalar.Rgb(255,255,0)
-centroid_radius = 10
+centroid_color = Scalar.Rgb(255,255,255)
+centroid_radius = 20
 
 
 
 @returns(IplImage)
 def process(value):
 
-  image = value.Item3
-  centroid_x = value.Item1
-  centroid_y = value.Item2
+  image = value.Item5
+  centroid_x = value.Item3
+  centroid_y = value.Item4
   if not math.isnan(centroid_x):
     CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
   return image</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Task</ipy:Name>
-        <ipy:Script>import clr
-clr.AddReference("OpenCV.Net")
+        <ipy:Name>Arena Grid</ipy:Name>
+        <ipy:Description />
+        <ipy:Script>clr.AddReference("OpenCV.Net")
 clr.AddReference("System")
 from System import Array, Byte
 from OpenCV.Net import *
@@ -131,7 +139,6 @@ class gridMaze():
 
         self.bounds = maze_bounds
         self.shape = maze_dims
-        #self.canvas = Array.CreateInstance(IplImage, maze_dims[1], maze_dims[0], 3)
         
         cellsize_x = maze_bounds[0] // maze_dims[0]
         cellsize_y = maze_bounds[1] // maze_dims[1]
@@ -156,16 +163,33 @@ def drawGrid(grid, image):
   #Pull out a single cell for neighbor testing
   CV.Rectangle(image, grid.cells[3][0], grid.cells[3][1], Scalar.Rgb(255,0,0), thickness=-1)  # Cell 8
 
-# Generate grid maze
-grid = gridMaze([1200,500], [12,5])
+# Function to extract dims from image
+def get_image_shape(image):
+    size = image.Size
+    width = size.Width
+    height = size.Height
+
+    return [width, height]
+
 
 
 @returns(IplImage)
 def process(value):
 
-  image = value.Item3
-  centroid_x = value.Item1
-  centroid_y = value.Item2
+  image = value.Item5
+
+  centroid_x = value.Item3
+  centroid_y = value.Item4
+
+  grid_cells_x = value.Item1
+  grid_cells_y = value.Item2
+
+  # Subdivide Arena by grid dims
+  img_dims = get_image_shape(image)
+  grid_dims = [grid_cells_x, grid_cells_y]
+
+  # Generate grid maze
+  grid = gridMaze(img_dims, grid_dims)
 
   # Visualize target location
   drawGrid(grid, image)
@@ -175,29 +199,28 @@ def process(value):
     CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
 
   return image
-
-
-
-
 </ipy:Script>
       </Expression>
     </Nodes>
     <Edges>
-      <Edge From="0" To="1" Label="Source1" />
-      <Edge From="1" To="2" Label="Source1" />
+      <Edge From="0" To="14" Label="Source1" />
+      <Edge From="1" To="14" Label="Source2" />
       <Edge From="2" To="3" Label="Source1" />
-      <Edge From="2" To="11" Label="Source4" />
       <Edge From="3" To="4" Label="Source1" />
       <Edge From="4" To="5" Label="Source1" />
+      <Edge From="4" To="14" Label="Source5" />
       <Edge From="5" To="6" Label="Source1" />
       <Edge From="6" To="7" Label="Source1" />
       <Edge From="7" To="8" Label="Source1" />
       <Edge From="8" To="9" Label="Source1" />
-      <Edge From="8" To="10" Label="Source1" />
-      <Edge From="9" To="11" Label="Source1" />
-      <Edge From="10" To="11" Label="Source2" />
+      <Edge From="9" To="10" Label="Source1" />
+      <Edge From="10" To="11" Label="Source1" />
       <Edge From="11" To="12" Label="Source1" />
       <Edge From="11" To="13" Label="Source1" />
+      <Edge From="12" To="14" Label="Source3" />
+      <Edge From="13" To="14" Label="Source4" />
+      <Edge From="14" To="15" Label="Source1" />
+      <Edge From="14" To="16" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
