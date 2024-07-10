@@ -9,16 +9,6 @@
   <Workflow>
     <Nodes>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="IntProperty">
-          <Value>2</Value>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="IntProperty">
-          <Value>2</Value>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
         <Combinator xsi:type="spk:SpinnakerCapture">
           <spk:Index>0</spk:Index>
           <spk:ColorProcessing>Default</spk:ColorProcessing>
@@ -96,28 +86,6 @@ def process(value):
         <Combinator xsi:type="rx:Zip" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Visualize Centroid</ipy:Name>
-        <ipy:Script>import clr
-clr.AddReference("OpenCV.Net")
-from OpenCV.Net import *
-import math
-
-centroid_color = Scalar.Rgb(255,255,255)
-centroid_radius = 20
-
-
-
-@returns(IplImage)
-def process(value):
-
-  image = value.Item5
-  centroid_x = value.Item3
-  centroid_y = value.Item4
-  if not math.isnan(centroid_x):
-    CV.Circle(image, Point(centroid_x,centroid_y), centroid_radius, centroid_color,-1)
-  return image</ipy:Script>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Arena Grid</ipy:Name>
         <ipy:Description />
         <ipy:Script>clr.AddReference("OpenCV.Net")
@@ -126,9 +94,9 @@ from System import Array, Byte
 from OpenCV.Net import *
 import math
 
-centroid_color = Scalar.Rgb(255,255,0)
+centroid_color = Scalar.Rgb(255,255,255)
 grid_color = Scalar.Rgb(255,255,255)
-centroid_radius = 10
+centroid_radius = 20
 
 
 # Class to generate maze coordinates
@@ -172,17 +140,16 @@ def get_image_shape(image):
     return [width, height]
 
 
-
 @returns(IplImage)
 def process(value):
 
-  image = value.Item5
+  image = value.Item1
 
-  centroid_x = value.Item3
-  centroid_y = value.Item4
+  centroid_x = value.Item2
+  centroid_y = value.Item3
 
-  grid_cells_x = value.Item1
-  grid_cells_y = value.Item2
+  grid_cells_x = 2#value.Item1
+  grid_cells_y = 2#value.Item2
 
   # Subdivide Arena by grid dims
   img_dims = get_image_shape(image)
@@ -203,24 +170,21 @@ def process(value):
       </Expression>
     </Nodes>
     <Edges>
-      <Edge From="0" To="14" Label="Source1" />
-      <Edge From="1" To="14" Label="Source2" />
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="1" To="2" Label="Source1" />
       <Edge From="2" To="3" Label="Source1" />
+      <Edge From="2" To="12" Label="Source1" />
       <Edge From="3" To="4" Label="Source1" />
       <Edge From="4" To="5" Label="Source1" />
-      <Edge From="4" To="14" Label="Source5" />
       <Edge From="5" To="6" Label="Source1" />
       <Edge From="6" To="7" Label="Source1" />
       <Edge From="7" To="8" Label="Source1" />
       <Edge From="8" To="9" Label="Source1" />
       <Edge From="9" To="10" Label="Source1" />
-      <Edge From="10" To="11" Label="Source1" />
-      <Edge From="11" To="12" Label="Source1" />
-      <Edge From="11" To="13" Label="Source1" />
-      <Edge From="12" To="14" Label="Source3" />
-      <Edge From="13" To="14" Label="Source4" />
-      <Edge From="14" To="15" Label="Source1" />
-      <Edge From="14" To="16" Label="Source1" />
+      <Edge From="9" To="11" Label="Source1" />
+      <Edge From="10" To="12" Label="Source2" />
+      <Edge From="11" To="12" Label="Source3" />
+      <Edge From="12" To="13" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
