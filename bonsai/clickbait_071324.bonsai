@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.8.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
+                 xmlns:ipy="clr-namespace:Bonsai.Scripting.IronPython;assembly=Bonsai.Scripting.IronPython"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
+                 xmlns="https://bonsai-rx.org/2018/workflow">
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:CameraCapture">
+          <cv:Index>1</cv:Index>
+          <cv:CaptureProperties />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Grayscale" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:VideoWriter">
+          <cv:FileName>C:\Git Repos\place-click\video\071324_testing.mp4</cv:FileName>
+          <cv:Suffix>None</cv:Suffix>
+          <cv:Buffered>true</cv:Buffered>
+          <cv:Overwrite>true</cv:Overwrite>
+          <cv:FourCC>FMP4</cv:FourCC>
+          <cv:FrameRate>30</cv:FrameRate>
+          <cv:FrameSize>
+            <cv:Width>0</cv:Width>
+            <cv:Height>0</cv:Height>
+          </cv:FrameSize>
+          <cv:ResizeInterpolation>NearestNeighbor</cv:ResizeInterpolation>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Threshold">
+          <cv:ThresholdValue>32</cv:ThresholdValue>
+          <cv:MaxValue>255</cv:MaxValue>
+          <cv:ThresholdType>Binary</cv:ThresholdType>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Invert Image</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+from OpenCV.Net import *
+
+@returns(IplImage)
+def process(value):
+
+  image = 255-value
+  return image</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:FindContours">
+          <cv:Mode>External</cv:Mode>
+          <cv:Method>ChainApproxSimple</cv:Method>
+          <cv:Offset>
+            <cv:X>0</cv:X>
+            <cv:Y>0</cv:Y>
+          </cv:Offset>
+          <cv:MinArea>12</cv:MinArea>
+          <cv:MaxArea xsi:nil="true" />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:BinaryRegionAnalysis" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:LargestBinaryRegion" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Centroid" />
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Y</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:ConvertColor">
+          <cv:Conversion>Gray2Bgr</cv:Conversion>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Zip" />
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Realtime Location</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+clr.AddReference("System")
+from OpenCV.Net import *
+import math
+
+centroid_color = Scalar.Rgb(255, 255, 255)
+target_color = Scalar.Rgb(255, 0, 0)
+grid_color = Scalar.Rgb(128, 128, 128)
+centroid_radius = 5
+
+# Class to generate maze coordinates
+class GridMaze:
+    def __init__(self, maze_bounds, maze_dims):
+        assert isinstance(maze_bounds, (tuple, list)), "Arena dims argument must be tuple or list"
+        assert isinstance(maze_dims, (tuple, list)), "Maze dims argument must be tuple or list"
+        assert maze_dims[0] &gt; 0 and maze_dims[1] &gt; 0, "Maze dimensions must be greater than zero"
+        
+        self.bounds = maze_bounds
+        self.shape = maze_dims
+        
+        cellsize_x = maze_bounds[0] // maze_dims[0]
+        cellsize_y = maze_bounds[1] // maze_dims[1]
+        
+        # Generate Grid
+        self.cells = [
+            (Point(x * cellsize_x, y * cellsize_y), 
+             Point((x + 1) * cellsize_x, (y + 1) * cellsize_y))
+            for y in range(self.shape[1])
+            for x in range(self.shape[0])
+        ]
+
+def draw_grid(grid, image):
+    for cell in grid.cells:
+        CV.Rectangle(image, cell[0], cell[1], grid_color, thickness=2)
+
+# Function to extract dims from image
+def get_image_shape(image):
+    size = image.Size
+    return [size.Width, size.Height]
+
+# Modified get_grid_location to handle potential float inputs
+def get_grid_location(grid, centroid_x, centroid_y, img):
+    cell_width = grid.bounds[0] // grid.shape[0]
+    cell_height = grid.bounds[1] // grid.shape[1]
+    
+    grid_x = int(centroid_x // cell_width)
+    grid_y = int(centroid_y // cell_height)
+    
+    if 0 &lt;= grid_x &lt; grid.shape[0] and 0 &lt;= grid_y &lt; grid.shape[1]:
+        cell = grid.cells[grid_y * grid.shape[0] + grid_x]
+        CV.Rectangle(img, cell[0], cell[1], target_color, thickness=-1)
+    
+    return grid_x, grid_y
+
+def create_blank_image(width, height, channels=3, color=(0, 0, 0)):
+    # Determine the depth based on the number of channels
+    depth = IplDepth.U8
+
+    # Create the image
+    img = IplImage(Size(width, height), depth, channels)
+    
+    # Fill the image with the specified color
+    if channels == 1:
+        fill_color = Scalar.All(color[0])
+    else:
+        fill_color = Scalar.Rgb(color[0], color[1], color[2])
+    
+    img.Set(fill_color)
+    
+    return img
+
+returns(tuple)
+def process(value):
+    image = value.Item3
+    centroid_x = value.Item1
+    centroid_y = value.Item2
+    grid_cells_x = 16
+    grid_cells_y = 12
+    
+    # Initialize grid_loc variables
+    grid_loc_x = None
+    grid_loc_y = None
+
+    # Subdivide Arena by grid dims
+    img_dims = get_image_shape(image)
+    grid_dims = [grid_cells_x, grid_cells_y]
+    
+    # Generate grid maze
+    grid = GridMaze(img_dims, grid_dims)
+    
+    #Blank canvas
+    canvas = create_blank_image(get_image_shape(image)[0], get_image_shape(image)[1])
+
+    # Visualize target location
+    draw_grid(grid, canvas)
+    
+    # Check if centroid values are valid before processing
+    if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
+        grid_loc_x, grid_loc_y = get_grid_location(grid, centroid_x, centroid_y, canvas)
+        
+        # Update mouse location
+        CV.Circle(canvas, Point(int(centroid_x), int(centroid_y)), centroid_radius, centroid_color, -1)
+    else:
+        print("Invalid centroid coordinates: NaN values detected")
+    
+    return (canvas, (grid_loc_x, grid_loc_y))</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Grid Visualization</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+clr.AddReference("System")
+from OpenCV.Net import *
+
+@returns(IplImage)
+def process(value):
+  return value[0]
+
+</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Grid Location</ipy:Name>
+        <ipy:Script>@returns(tuple)
+def process(value):
+  return value[1]</ipy:Script>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="1" To="2" Label="Source1" />
+      <Edge From="1" To="3" Label="Source1" />
+      <Edge From="1" To="11" Label="Source1" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
+      <Edge From="5" To="6" Label="Source1" />
+      <Edge From="6" To="7" Label="Source1" />
+      <Edge From="7" To="8" Label="Source1" />
+      <Edge From="8" To="9" Label="Source1" />
+      <Edge From="8" To="10" Label="Source1" />
+      <Edge From="9" To="12" Label="Source1" />
+      <Edge From="10" To="12" Label="Source2" />
+      <Edge From="11" To="12" Label="Source3" />
+      <Edge From="12" To="13" Label="Source1" />
+      <Edge From="13" To="14" Label="Source1" />
+      <Edge From="13" To="15" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>
