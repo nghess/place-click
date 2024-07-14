@@ -92,9 +92,12 @@ clr.AddReference("OpenCV.Net")
 clr.AddReference("System")
 from OpenCV.Net import *
 import math
+import random
 
+# Visualization colors
 centroid_color = Scalar.Rgb(255, 255, 255)
-target_color = Scalar.Rgb(255, 0, 0)
+mouse_loc_color = Scalar.Rgb(255, 0, 0)
+target_color = Scalar.Rgb(64, 64, 64)
 grid_color = Scalar.Rgb(128, 128, 128)
 centroid_radius = 5
 
@@ -119,54 +122,90 @@ class GridMaze:
             for x in range(self.shape[0])
         ]
 
-def draw_grid(grid, image):
+def draw_grid(grid, img):
     for cell in grid.cells:
-        CV.Rectangle(image, cell[0], cell[1], grid_color, thickness=2)
+        CV.Rectangle(img, cell[0], cell[1], grid_color, thickness=2)
 
 # Function to extract dims from image
-def get_image_shape(image):
-    size = image.Size
+def get_image_shape(img):
+    size = img.Size
     return [size.Width, size.Height]
 
 # Modified get_grid_location to handle potential float inputs
-def get_grid_location(grid, centroid_x, centroid_y, img):
+def get_grid_location(grid, centroid_x, centroid_y, tgt_list, img):
     cell_width = grid.bounds[0] // grid.shape[0]
     cell_height = grid.bounds[1] // grid.shape[1]
     
     grid_x = int(centroid_x // cell_width)
     grid_y = int(centroid_y // cell_height)
     
+    # Get current cell and draw it
     if 0 &lt;= grid_x &lt; grid.shape[0] and 0 &lt;= grid_y &lt; grid.shape[1]:
         cell = grid.cells[grid_y * grid.shape[0] + grid_x]
-        CV.Rectangle(img, cell[0], cell[1], target_color, thickness=-1)
+        CV.Rectangle(img, cell[0], cell[1], mouse_loc_color, thickness=-1)
     
-    return grid_x, grid_y
+    # Check if current cell is in target list. If so, remove from target list
+    tgt_list = [tgt for tgt in tgt_list if tgt != grid_y * grid.shape[0] + grid_x]
+    
+    return grid_x, grid_y, tgt_list
 
-def create_blank_image(width, height, channels=3, color=(0, 0, 0)):
-    # Determine the depth based on the number of channels
+def create_blank_canvas(width, height, channels=3, color=(0, 0, 0)):
     depth = IplDepth.U8
-
-    # Create the image
     img = IplImage(Size(width, height), depth, channels)
-    
-    # Fill the image with the specified color
     if channels == 1:
         fill_color = Scalar.All(color[0])
     else:
         fill_color = Scalar.Rgb(color[0], color[1], color[2])
-    
     img.Set(fill_color)
     
     return img
 
+"""
+Define targets
+"""
+
+def generate_targets(grid_cells_x, grid_cells_y, num_tgt):
+
+  possible_targets = grid_cells_x * grid_cells_y
+  tgt_list = []
+
+  for ii in range(num_targets):
+    tgt_cell = random.randint(0, possible_targets-1)
+    tgt_list.append(tgt_cell)
+  
+  return grid_cells_x, grid_cells_y, tgt_list
+
+def draw_targets(tgt_list, grid, img):
+  for target in tgt_list:
+    CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
+
+# Here we define the number of grid cells to divide the arena by
+grid_x = 16
+grid_y = 12
+
+# And the number of search targets
+num_targets = 5
+
+# Generate grid and targets
+global target_list
+grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
+
+
+"""
+Execute task
+"""
+
 returns(tuple)
 def process(value):
-    image = value.Item3
+
+    # Declare target list as global
+    global target_list
+
+    # Realtime variables
     centroid_x = value.Item1
     centroid_y = value.Item2
-    grid_cells_x = 16
-    grid_cells_y = 12
-    
+    image = value.Item3
+
     # Initialize grid_loc variables
     grid_loc_x = None
     grid_loc_y = None
@@ -179,19 +218,24 @@ def process(value):
     grid = GridMaze(img_dims, grid_dims)
     
     #Blank canvas
-    canvas = create_blank_image(get_image_shape(image)[0], get_image_shape(image)[1])
+    canvas = create_blank_canvas(get_image_shape(image)[0], get_image_shape(image)[1])
 
     # Visualize target location
     draw_grid(grid, canvas)
+
+    # Draw Targets
+    draw_targets(target_list, grid, canvas)
     
     # Check if centroid values are valid before processing
     if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
-        grid_loc_x, grid_loc_y = get_grid_location(grid, centroid_x, centroid_y, canvas)
+        grid_loc_x, grid_loc_y, target_list= get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
         
         # Update mouse location
         CV.Circle(canvas, Point(int(centroid_x), int(centroid_y)), centroid_radius, centroid_color, -1)
-    else:
-        print("Invalid centroid coordinates: NaN values detected")
+
+        # If target list has been exhausted, generate new one
+        if len(target_list) == 0:
+          _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
     
     return (canvas, (grid_loc_x, grid_loc_y))</ipy:Script>
       </Expression>
