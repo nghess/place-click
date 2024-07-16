@@ -1,0 +1,352 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.8.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
+                 xmlns:ipy="clr-namespace:Bonsai.Scripting.IronPython;assembly=Bonsai.Scripting.IronPython"
+                 xmlns:ard="clr-namespace:Bonsai.Arduino;assembly=Bonsai.Arduino"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
+                 xmlns="https://bonsai-rx.org/2018/workflow">
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:CameraCapture">
+          <cv:Index>1</cv:Index>
+          <cv:CaptureProperties />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Grayscale" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:VideoWriter">
+          <cv:FileName>C:\Git Repos\place-click\video\071324_testing.mp4</cv:FileName>
+          <cv:Suffix>None</cv:Suffix>
+          <cv:Buffered>true</cv:Buffered>
+          <cv:Overwrite>true</cv:Overwrite>
+          <cv:FourCC>FMP4</cv:FourCC>
+          <cv:FrameRate>30</cv:FrameRate>
+          <cv:FrameSize>
+            <cv:Width>0</cv:Width>
+            <cv:Height>0</cv:Height>
+          </cv:FrameSize>
+          <cv:ResizeInterpolation>NearestNeighbor</cv:ResizeInterpolation>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Threshold">
+          <cv:ThresholdValue>32</cv:ThresholdValue>
+          <cv:MaxValue>255</cv:MaxValue>
+          <cv:ThresholdType>Binary</cv:ThresholdType>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Invert Image</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+from OpenCV.Net import *
+
+@returns(IplImage)
+def process(value):
+
+  image = 255-value
+  return image</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:FindContours">
+          <cv:Mode>External</cv:Mode>
+          <cv:Method>ChainApproxSimple</cv:Method>
+          <cv:Offset>
+            <cv:X>0</cv:X>
+            <cv:Y>0</cv:Y>
+          </cv:Offset>
+          <cv:MinArea>12</cv:MinArea>
+          <cv:MaxArea xsi:nil="true" />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:BinaryRegionAnalysis" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:LargestBinaryRegion" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:Centroid" />
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Y</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:ConvertColor">
+          <cv:Conversion>Gray2Bgr</cv:Conversion>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:AnalogInput">
+          <ard:PortName>COM5</ard:PortName>
+          <ard:Pin>0</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="GreaterThan">
+        <Operand xsi:type="IntProperty">
+          <Value>0</Value>
+        </Operand>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:CombineLatest" />
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Clickbait Task</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+clr.AddReference("System")
+from OpenCV.Net import *
+import math
+import random
+
+# Class to generate maze coordinates
+class GridMaze:
+    def __init__(self, maze_bounds, maze_dims):
+        self.bounds = maze_bounds
+        self.shape = maze_dims
+        
+        cellsize_x = maze_bounds[0] // maze_dims[0]
+        cellsize_y = maze_bounds[1] // maze_dims[1]
+        
+        # Generate Grid
+        self.cells = [
+            (Point(x * cellsize_x, y * cellsize_y), 
+             Point((x + 1) * cellsize_x, (y + 1) * cellsize_y))
+            for y in range(self.shape[1])
+            for x in range(self.shape[0])
+        ]
+
+def draw_grid(grid, img):
+    for cell in grid.cells:
+        CV.Rectangle(img, cell[0], cell[1], grid_color, thickness=2)
+
+# Function to extract dims from image
+def get_image_shape(img):
+    size = img.Size
+    return [size.Width, size.Height]
+
+# Modified get_grid_location to handle potential float inputs
+def get_grid_location(grid, centroid_x, centroid_y, tgt_list, img):
+    cell_width = grid.bounds[0] // grid.shape[0]
+    cell_height = grid.bounds[1] // grid.shape[1]
+    
+    grid_x = int(centroid_x // cell_width)
+    grid_y = int(centroid_y // cell_height)
+    
+    # Get current cell and draw it
+    if 0 &lt;= grid_x &lt; grid.shape[0] and 0 &lt;= grid_y &lt; grid.shape[1]:
+        cell = grid.cells[grid_y * grid.shape[0] + grid_x]
+        CV.Rectangle(img, cell[0], cell[1], mouse_loc_color, thickness=-1)
+    
+    # Check if current cell is in target list. If so, remove from target list
+    tgt_list = [tgt for tgt in tgt_list if tgt != grid_y * grid.shape[0] + grid_x]
+    
+    return grid_x, grid_y, tgt_list
+
+def create_blank_canvas(width, height, channels=3, color=(0, 0, 0)):
+    depth = IplDepth.U8
+    img = IplImage(Size(width, height), depth, channels)
+    if channels == 1:
+        fill_color = Scalar.All(color[0])
+    else:
+        fill_color = Scalar.Rgb(color[0], color[1], color[2])
+    img.Set(fill_color)
+    
+    return img
+
+"""
+Define targets
+"""
+
+def generate_targets(grid_cells_x, grid_cells_y, num_tgt):
+
+  possible_targets = grid_cells_x * grid_cells_y
+  tgt_list = []
+
+  for ii in range(num_targets):
+    tgt_cell = random.randint(0, possible_targets-1)
+    tgt_list.append(tgt_cell)
+  
+  return grid_cells_x, grid_cells_y, tgt_list
+
+def draw_targets(tgt_list, grid, img):
+  for target in tgt_list:
+    CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
+
+# Here we define the number of grid cells to divide the arena by
+grid_x = 4
+grid_y = 3
+
+# And the number of search targets
+num_targets = 1
+
+# Generate grid and targets
+global target_list
+grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
+
+global reward_state
+reward_state = False
+
+global drinking
+drinking = False
+"""
+# Visualization parameters
+"""
+centroid_color = Scalar.Rgb(255, 255, 255)
+mouse_loc_color = Scalar.Rgb(255, 0, 0)
+target_color = Scalar.Rgb(64, 64, 64)
+grid_color = Scalar.Rgb(128, 128, 128)
+centroid_radius = 5
+
+"""
+Execute task
+"""
+
+returns(tuple)
+def process(value):
+
+    # Declare global vars
+    global target_list
+    global reward_state
+    global drinking
+
+    # Load pealtime variables from Zip node
+    centroid_x = value[0].Item1  # X
+    centroid_y = value[0].Item2  # Y
+    image = value[0].Item3  # ConvertColor
+    poke = value[1] # AnalogInput
+    #poke_2 = value.Item5  # DigitalInput
+
+    # Initialize grid_loc variables
+    grid_loc_x = None
+    grid_loc_y = None
+
+    # Subdivide Arena by grid dims
+    img_dims = get_image_shape(image)
+    grid_dims = [grid_cells_x, grid_cells_y]
+    
+    # Generate grid maze
+    grid = GridMaze(img_dims, grid_dims)
+    
+    #Blank canvas
+    canvas = create_blank_canvas(get_image_shape(image)[0], get_image_shape(image)[1])
+
+    # Visualize target location
+    draw_grid(grid, canvas)
+
+    # Draw Targets
+    draw_targets(target_list, grid, canvas)
+    
+    # Check if centroid values are valid before processing
+    if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
+        grid_loc_x, grid_loc_y, target_list= get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
+        
+        # Update mouse location
+        CV.Circle(canvas, Point(int(centroid_x), int(centroid_y)), centroid_radius, centroid_color, -1)
+
+        # If target list has been exhausted, generate new one
+        if len(target_list) == 0:
+          reward_state = True
+        else:
+          reward_state = False
+        
+        if poke:
+          drinking = True
+        else:
+          drinking = False
+
+        # If mouse pokes during reward state, give water and generate next trial
+        if reward_state and drinking:
+            _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
+            reward_state = False
+            
+          # Deliver water here
+    
+    return (canvas, (grid_loc_x, grid_loc_y), reward_state, drinking)</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Grid Visualization</ipy:Name>
+        <ipy:Script>import clr
+clr.AddReference("OpenCV.Net")
+clr.AddReference("System")
+from OpenCV.Net import *
+
+@returns(IplImage)
+def process(value):
+  return value[0]
+
+</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Grid Location</ipy:Name>
+        <ipy:Script>@returns(tuple)
+def process(value):
+  return value[1]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Reward State</ipy:Name>
+        <ipy:Script># Get reward state
+
+@returns(bool)
+def process(value):
+  return value[2]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM5</ard:PortName>
+          <ard:Pin>53</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Drinking</ipy:Name>
+        <ipy:Script># Get poke state
+
+@returns(bool)
+def process(value):
+  return value[3]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM5</ard:PortName>
+          <ard:Pin>31</ard:Pin>
+        </Combinator>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="1" To="2" Label="Source1" />
+      <Edge From="1" To="3" Label="Source1" />
+      <Edge From="1" To="11" Label="Source1" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
+      <Edge From="5" To="6" Label="Source1" />
+      <Edge From="6" To="7" Label="Source1" />
+      <Edge From="7" To="8" Label="Source1" />
+      <Edge From="8" To="9" Label="Source1" />
+      <Edge From="8" To="10" Label="Source1" />
+      <Edge From="9" To="12" Label="Source1" />
+      <Edge From="10" To="12" Label="Source2" />
+      <Edge From="11" To="12" Label="Source3" />
+      <Edge From="12" To="15" Label="Source1" />
+      <Edge From="13" To="14" Label="Source1" />
+      <Edge From="14" To="15" Label="Source2" />
+      <Edge From="15" To="16" Label="Source1" />
+      <Edge From="16" To="17" Label="Source1" />
+      <Edge From="16" To="18" Label="Source1" />
+      <Edge From="16" To="19" Label="Source1" />
+      <Edge From="16" To="21" Label="Source1" />
+      <Edge From="19" To="20" Label="Source1" />
+      <Edge From="21" To="22" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>
