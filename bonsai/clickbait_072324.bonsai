@@ -94,7 +94,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThanOrEqual">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>30</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="Combinator">
@@ -105,7 +105,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThanOrEqual">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>3</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="Combinator">
@@ -238,8 +238,8 @@ def process(value):
     centroid_x = value[0].Item1  # X
     centroid_y = value[0].Item2  # Y
     image = value[0].Item3  # ConvertColor
-    poke_left = value[1][0]  # AnalogInput Pin 0
-    poke_right = value[1][1]  # AnalogInput Pin 1
+    poke_left = bool(value[1][0])  # AnalogInput Pin 0
+    poke_right = bool(value[1][1])  # AnalogInput Pin 1
 
     # Initialize grid_loc variables
     grid_loc_x = None
@@ -263,28 +263,28 @@ def process(value):
     
     # Check if centroid values are valid before processing
     if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
-        grid_loc_x, grid_loc_y, target_list= get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
+        grid_loc_x, grid_loc_y, target_list = get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
         
         # Update mouse location
         CV.Circle(canvas, Point(int(centroid_x), int(centroid_y)), centroid_radius, centroid_color, -1)
 
-        # If target list has been exhausted, generate new one
-        if len(target_list) == 0:
-          reward_state = True
-        else:
-          reward_state = False
-        
-        if poke_left or poke_right:
-          drinking = True
-        else:
-          drinking = False
+    # If target list has been exhausted, generate new one
+    if len(target_list) == 0:
+      reward_state = True
+    else:
+      reward_state = False
+    
+    if poke_left or poke_right:
+      drinking = True
+    else:
+      drinking = False
 
-        # If mouse pokes during reward state, give water and generate next trial
-        if reward_state and drinking:
-            _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
-            reward_state = False
-            
-          # Deliver water here
+    # If mouse pokes during reward state, give water and generate next trial
+    if reward_state and drinking:
+        _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
+        reward_state = False
+        
+      # Deliver water here
     
     return (canvas, (grid_loc_x, grid_loc_y), reward_state, drinking)</ipy:Script>
       </Expression>
@@ -322,8 +322,26 @@ def process(value):
         </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Drinking</ipy:Name>
-        <ipy:Script># Get poke state
+        <ipy:Name>Poke Left</ipy:Name>
+        <ipy:Script># Get poke state and reward state
+# If both true, give reward
+# maybe put timer in task code?
+
+@returns(bool)
+def process(value):
+  return value[3]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM6</ard:PortName>
+          <ard:Pin>7</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Poke Right</ipy:Name>
+        <ipy:Script># Get poke state and reward state
+# If both true, give reward
+# maybe put timer in task code?
 
 @returns(bool)
 def process(value):
@@ -333,6 +351,12 @@ def process(value):
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>COM6</ard:PortName>
           <ard:Pin>8</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:AnalogInput">
+          <ard:PortName>COM6</ard:PortName>
+          <ard:Pin>3</ard:Pin>
         </Combinator>
       </Expression>
     </Nodes>
@@ -362,8 +386,10 @@ def process(value):
       <Edge From="19" To="21" Label="Source1" />
       <Edge From="19" To="22" Label="Source1" />
       <Edge From="19" To="24" Label="Source1" />
+      <Edge From="19" To="26" Label="Source1" />
       <Edge From="22" To="23" Label="Source1" />
       <Edge From="24" To="25" Label="Source1" />
+      <Edge From="26" To="27" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>

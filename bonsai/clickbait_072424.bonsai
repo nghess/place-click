@@ -94,7 +94,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThanOrEqual">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>5</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="Combinator">
@@ -105,7 +105,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThanOrEqual">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>20</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="Combinator">
@@ -121,6 +121,7 @@ clr.AddReference("OpenCV.Net")
 clr.AddReference("System")
 from OpenCV.Net import *
 import math
+import time
 import random
 
 # Class to generate maze coordinates
@@ -208,11 +209,37 @@ num_targets = 1
 global target_list
 grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
 
+# Initialize reward variables
 global reward_state
 reward_state = False
-
+global click
+click = False
+global click_start_time
+click_start_time = 0
 global drinking
 drinking = False
+global reward_left
+reward_left = False
+global reward_right
+reward_right = False
+global reward_left_start_time
+reward_left_start_time = 0
+global reward_right_start_time
+reward_right_start_time = 0
+
+# ITI Variables
+global iti_start_time
+global iti_duration
+global in_iti
+global prev_poke_left
+global prev_poke_right
+
+iti_start_time = 0
+iti_duration = 0
+in_iti = False
+prev_poke_left = False
+prev_poke_right = False
+
 """
 # Visualization parameters
 """
@@ -232,14 +259,30 @@ def process(value):
     # Declare global vars
     global target_list
     global reward_state
+    global click
+    global click_start_time
     global drinking
+    global reward_left
+    global reward_right
+    global reward_left_start_time
+    global reward_right_start_time
+    global iti_start_time
+    global iti_duration
+    global in_iti
+    global prev_poke_left
+    global prev_poke_right
+
+    # Timing-related vars
+    current_time = time.time()
+    reward_duration = 0.5  # 0.5 seconds
+    click_duration = 0.1
 
     # Load pealtime variables from Zip node
     centroid_x = value[0].Item1  # X
     centroid_y = value[0].Item2  # Y
     image = value[0].Item3  # ConvertColor
-    poke_left = value[1][0]  # AnalogInput Pin 0
-    poke_right = value[1][1]  # AnalogInput Pin 1
+    poke_left = bool(value[1][0])  # AnalogInput Pin 0
+    poke_right = bool(value[1][1])  # AnalogInput Pin 1
 
     # Initialize grid_loc variables
     grid_loc_x = None
@@ -263,30 +306,68 @@ def process(value):
     
     # Check if centroid values are valid before processing
     if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
-        grid_loc_x, grid_loc_y, target_list= get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
+        grid_loc_x, grid_loc_y, target_list = get_grid_location(grid, centroid_x, centroid_y, target_list, canvas)
         
         # Update mouse location
         CV.Circle(canvas, Point(int(centroid_x), int(centroid_y)), centroid_radius, centroid_color, -1)
 
-        # If target list has been exhausted, generate new one
-        if len(target_list) == 0:
-          reward_state = True
-        else:
-          reward_state = False
-        
-        if poke_left or poke_right:
-          drinking = True
-        else:
-          drinking = False
+    # Check for poke state transitions
+    if (prev_poke_left or prev_poke_right) and not (poke_left or poke_right):
+        # Transition from poking to not poking
+        in_iti = True
+        iti_start_time = current_time
+        iti_duration = random.uniform(1.0, 3.0)  # Random ITI between 1 and 3 seconds
 
-        # If mouse pokes during reward state, give water and generate next trial
-        if reward_state and drinking:
-            _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
-            reward_state = False
-            
-          # Deliver water here
+    # Update previous poke states
+    prev_poke_left = poke_left
+    prev_poke_right = poke_right
+
+    # Check if ITI has elapsed
+    if in_iti and current_time - iti_start_time &gt;= iti_duration:
+        in_iti = False
+        # Generate new target list after ITI
+        _, _, target_list = generate_targets(grid_x, grid_y, num_targets)
+
+    # If target list has been exhausted, enter reward state
+    if len(target_list) == 0 and not in_iti:
+        if not reward_state:  # Trigger click when entering reward state
+            click = True
+            click_start_time = current_time
+        reward_state = True
+    else:
+        reward_state = False
+
+    if current_time - click_start_time &gt;= click_duration:
+      click = False
     
-    return (canvas, (grid_loc_x, grid_loc_y), reward_state, drinking)</ipy:Script>
+    # Set drinking state
+    if poke_left or poke_right:
+      drinking = True
+    else:
+      drinking = False
+
+    # Set reward_left
+    if poke_left and reward_state:
+        reward_left = True
+        reward_left_start_time = current_time
+    elif current_time - reward_left_start_time &gt;= reward_duration:
+        reward_left = False
+
+    # Set reward_right
+    if poke_right and reward_state:
+        reward_right = True
+        reward_right_start_time = current_time
+    elif current_time - reward_right_start_time &gt;= reward_duration:
+        reward_right = False
+
+    # If mouse pokes during reward state, start ITI
+    if reward_state and drinking:
+        in_iti = True
+        iti_start_time = current_time
+        iti_duration = random.uniform(1.0, 3.0)  # Random ITI between 1 and 3 seconds
+        reward_state = False
+
+    return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, drinking, in_iti, click)</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Grid Visualization</ipy:Name>
@@ -318,12 +399,12 @@ def process(value):
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>COM6</ard:PortName>
-          <ard:Pin>7</ard:Pin>
+          <ard:Pin>13</ard:Pin>
         </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Drinking</ipy:Name>
-        <ipy:Script># Get poke state
+        <ipy:Name>Reward Left</ipy:Name>
+        <ipy:Script># Get reward_left state
 
 @returns(bool)
 def process(value):
@@ -332,7 +413,49 @@ def process(value):
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>COM6</ard:PortName>
+          <ard:Pin>7</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Reward Right</ipy:Name>
+        <ipy:Script># Get reward_right state and reward state
+
+@returns(bool)
+def process(value):
+  return value[4]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM6</ard:PortName>
           <ard:Pin>8</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Click</ipy:Name>
+        <ipy:Script># Get click state (click is always last item in return statement)
+
+@returns(bool)
+def process(value):
+  return value[-1]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM6</ard:PortName>
+          <ard:Pin>12</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>ITI</ipy:Name>
+        <ipy:Script># Get click state (iti is always second to last item in return statement)
+
+@returns(bool)
+def process(value):
+  return value[-2]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM6</ard:PortName>
+          <ard:Pin>2</ard:Pin>
         </Combinator>
       </Expression>
     </Nodes>
@@ -362,8 +485,14 @@ def process(value):
       <Edge From="19" To="21" Label="Source1" />
       <Edge From="19" To="22" Label="Source1" />
       <Edge From="19" To="24" Label="Source1" />
+      <Edge From="19" To="26" Label="Source1" />
+      <Edge From="19" To="28" Label="Source1" />
+      <Edge From="19" To="30" Label="Source1" />
       <Edge From="22" To="23" Label="Source1" />
       <Edge From="24" To="25" Label="Source1" />
+      <Edge From="26" To="27" Label="Source1" />
+      <Edge From="28" To="29" Label="Source1" />
+      <Edge From="30" To="31" Label="Source1" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
