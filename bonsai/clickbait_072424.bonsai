@@ -10,7 +10,7 @@
     <Nodes>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:CameraCapture">
-          <cv:Index>1</cv:Index>
+          <cv:Index>0</cv:Index>
           <cv:CaptureProperties />
         </Combinator>
       </Expression>
@@ -209,6 +209,9 @@ num_targets = 1
 global target_list
 grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
 
+"""
+Global variables
+"""
 # Initialize reward variables
 global reward_state
 reward_state = False
@@ -276,6 +279,8 @@ def process(value):
     current_time = time.time()
     reward_duration = 0.5  # 0.5 seconds
     click_duration = 0.1
+    iti_duration_min = 1.0
+    iti_duration_max = 3.0
 
     # Load pealtime variables from Zip node
     centroid_x = value[0].Item1  # X
@@ -364,7 +369,7 @@ def process(value):
     if reward_state and drinking:
         in_iti = True
         iti_start_time = current_time
-        iti_duration = random.uniform(1.0, 3.0)  # Random ITI between 1 and 3 seconds
+        iti_duration = random.uniform(iti_duration_min, iti_duration_max)  # Random ITI length (set at beginning of function)
         reward_state = False
 
     return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, drinking, in_iti, click)</ipy:Script>
