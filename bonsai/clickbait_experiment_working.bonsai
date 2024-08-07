@@ -63,7 +63,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>T:\clickbait\raw_videos\20240806_1003_Shaping 1_camera.avi</cv:FileName>
+          <cv:FileName>T:\clickbait\raw_videos\20240319_1234_Test 0_camera.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -147,7 +147,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>15</Value>
+          <Value>30</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
@@ -161,7 +161,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>15</Value>
+          <Value>30</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
@@ -263,8 +263,8 @@ def draw_targets(tgt_list, grid, img):
     CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
 
 # Here we define the number of grid cells to divide the arena by
-grid_x = 1
-grid_y = 1
+grid_x = 10
+grid_y = 4
 
 # And the number of search targets
 num_targets = 1
@@ -465,23 +465,19 @@ def process(value):
           <ard:Pin>8</ard:Pin>
         </Combinator>
       </Expression>
-      <Expression xsi:type="Disable">
-        <Builder xsi:type="ipy:PythonTransform">
-          <ipy:Name>Click</ipy:Name>
-          <ipy:Script># Get click state (click is always last item in return statement)
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Click</ipy:Name>
+        <ipy:Script># Get click state (click is always last item in return statement)
 
 @returns(bool)
 def process(value):
   return value[-1]</ipy:Script>
-        </Builder>
       </Expression>
-      <Expression xsi:type="Disable">
-        <Builder xsi:type="Combinator">
-          <Combinator xsi:type="ard:DigitalOutput">
-            <ard:PortName>Arduino Mega 2560</ard:PortName>
-            <ard:Pin>12</ard:Pin>
-          </Combinator>
-        </Builder>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>12</ard:Pin>
+        </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Reward State</ipy:Name>
@@ -550,7 +546,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="dsp:MatrixWriter">
-          <dsp:Path>T:\clickbait\ephys_recordings\none\1003\Shaping 1\20240806_1003_Shaping 1_Ephys.bin</dsp:Path>
+          <dsp:Path>T:\clickbait\ephys_recordings\none\1234\Test 0\20240319_1234_Test 0_Ephys.bin</dsp:Path>
           <dsp:Suffix>None</dsp:Suffix>
           <dsp:Overwrite>true</dsp:Overwrite>
           <dsp:Layout>ColumnMajor</dsp:Layout>
@@ -604,7 +600,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>20240806</Value>
+                <Value>20240319</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -719,7 +715,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>1003</Value>
+                <Value>1234</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -755,7 +751,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>Shaping 1</Value>
+                <Value>Test 0</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
