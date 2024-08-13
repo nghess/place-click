@@ -465,7 +465,7 @@ def process(value):
     prev_poke_left, prev_poke_right = poke_left, poke_right
     drinking = poke_left or poke_right
 
-    return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, drinking, in_iti, click, trial_count, reward_left_count, reward_right_count)</ipy:Script>
+    return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, drinking, in_iti, click, tuple(target_list), trial_count, reward_left_count, reward_right_count)</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Grid Visualization</ipy:Name>
@@ -487,12 +487,6 @@ def process(value):
 @returns(int)
 def process(value):
   return value[-3]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Grid Location</ipy:Name>
-        <ipy:Script>@returns(tuple)
-def process(value):
-  return value[1]</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Water Left</ipy:Name>
@@ -532,6 +526,18 @@ def process(value):
       <Expression xsi:type="MemberSelector">
         <Selector>Timestamp.DateTime</Selector>
       </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Targets</ipy:Name>
+        <ipy:Script>@returns(str)
+def process(value):
+  target_list = ""
+  targets = value[8]
+  for ii in range(len(targets)):
+    target_list += str(targets[ii])
+    target_list += ","
+    
+  return target_list</ipy:Script>
+      </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:Zip" />
       </Expression>
@@ -561,7 +567,7 @@ def process(value):
         <io:Overwrite>false</io:Overwrite>
         <io:Suffix>None</io:Suffix>
         <io:IncludeHeader>true</io:IncludeHeader>
-        <io:Selector>Item1,Item2.Count,Item3,Item4,Item5,Item6,Item7</io:Selector>
+        <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6,Item7</io:Selector>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
@@ -616,6 +622,12 @@ def process(value):
 @returns(int)
 def process(value):
   return value[-2]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Grid Location</ipy:Name>
+        <ipy:Script>@returns(tuple)
+def process(value):
+  return value[1]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="eph:Rhd2000EvalBoard">
@@ -1043,21 +1055,22 @@ def process(value):
       <Edge From="44" To="49" Label="Source1" />
       <Edge From="44" To="50" Label="Source1" />
       <Edge From="44" To="51" Label="Source1" />
-      <Edge From="44" To="52" Label="Source1" />
+      <Edge From="44" To="53" Label="Source1" />
       <Edge From="44" To="67" Label="Source1" />
       <Edge From="44" To="69" Label="Source1" />
       <Edge From="44" To="70" Label="Source1" />
+      <Edge From="44" To="71" Label="Source1" />
       <Edge From="46" To="54" Label="Source1" />
       <Edge From="47" To="54" Label="Source2" />
+      <Edge From="47" To="63" Label="Source1" />
       <Edge From="48" To="54" Label="Source3" />
-      <Edge From="48" To="63" Label="Source1" />
+      <Edge From="48" To="64" Label="Source1" />
       <Edge From="49" To="54" Label="Source4" />
-      <Edge From="49" To="64" Label="Source1" />
+      <Edge From="49" To="65" Label="Source1" />
       <Edge From="50" To="54" Label="Source5" />
-      <Edge From="50" To="65" Label="Source1" />
-      <Edge From="51" To="54" Label="Source6" />
-      <Edge From="51" To="66" Label="Source1" />
-      <Edge From="52" To="53" Label="Source1" />
+      <Edge From="50" To="66" Label="Source1" />
+      <Edge From="51" To="52" Label="Source1" />
+      <Edge From="52" To="54" Label="Source6" />
       <Edge From="53" To="54" Label="Source7" />
       <Edge From="54" To="62" Label="Source1" />
       <Edge From="55" To="57" Label="Source1" />
@@ -1068,15 +1081,15 @@ def process(value):
       <Edge From="60" To="61" Label="Source1" />
       <Edge From="61" To="62" Label="Source2" />
       <Edge From="67" To="68" Label="Source1" />
-      <Edge From="71" To="72" Label="Source1" />
-      <Edge From="72" To="80" Label="Source1" />
-      <Edge From="73" To="75" Label="Source1" />
-      <Edge From="74" To="75" Label="Source2" />
-      <Edge From="75" To="76" Label="Source1" />
+      <Edge From="72" To="73" Label="Source1" />
+      <Edge From="73" To="81" Label="Source1" />
+      <Edge From="74" To="76" Label="Source1" />
+      <Edge From="75" To="76" Label="Source2" />
       <Edge From="76" To="77" Label="Source1" />
       <Edge From="77" To="78" Label="Source1" />
       <Edge From="78" To="79" Label="Source1" />
-      <Edge From="79" To="80" Label="Source2" />
+      <Edge From="79" To="80" Label="Source1" />
+      <Edge From="80" To="81" Label="Source2" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
