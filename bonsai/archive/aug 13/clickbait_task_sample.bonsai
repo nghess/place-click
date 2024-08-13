@@ -174,9 +174,6 @@ def process(value):
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Zip" />
-      </Expression>
-      <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:AnalogInput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
           <ard:Pin>0</ard:Pin>
@@ -189,6 +186,9 @@ def process(value):
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
         <Name>Poke Left</Name>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Sample" />
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:AnalogInput">
@@ -205,15 +205,13 @@ def process(value):
         <Name>Poke Right</Name>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
+        <Combinator xsi:type="rx:Sample" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:SampleInterval">
-          <rx:Interval>PT0.1S</rx:Interval>
-        </Combinator>
+        <Combinator xsi:type="rx:WithLatestFrom" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
+        <Combinator xsi:type="rx:Zip" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Clickbait Task</ipy:Name>
@@ -402,8 +400,8 @@ def process(value):
     withdrawal_duration = 0.5
 
     # Load realtime variables from Zip node
-    centroid_x, centroid_y, image = value[0].Item1, value[0].Item2, value[0].Item3
-    poke_left, poke_right = bool(value[1][0]), bool(value[1][1])
+    centroid_x, centroid_y, image = value.Item1, value.Item2, value.Item3
+    poke_left, poke_right = bool(value.Item4[0]), bool(value.Item4[1])
 
     # Process grid and canvas
     grid_loc_x, grid_loc_y = None, None
@@ -1023,18 +1021,20 @@ def process(value):
       <Edge From="29" To="30" Label="Source1" />
       <Edge From="30" To="31" Label="Source1" />
       <Edge From="30" To="32" Label="Source1" />
-      <Edge From="31" To="34" Label="Source1" />
-      <Edge From="32" To="34" Label="Source2" />
-      <Edge From="33" To="34" Label="Source3" />
-      <Edge From="34" To="43" Label="Source1" />
+      <Edge From="31" To="37" Label="Source2" />
+      <Edge From="31" To="43" Label="Source1" />
+      <Edge From="32" To="41" Label="Source2" />
+      <Edge From="32" To="43" Label="Source2" />
+      <Edge From="33" To="43" Label="Source3" />
+      <Edge From="34" To="35" Label="Source1" />
       <Edge From="35" To="36" Label="Source1" />
       <Edge From="36" To="37" Label="Source1" />
-      <Edge From="37" To="41" Label="Source1" />
+      <Edge From="37" To="42" Label="Source1" />
       <Edge From="38" To="39" Label="Source1" />
       <Edge From="39" To="40" Label="Source1" />
-      <Edge From="40" To="41" Label="Source2" />
-      <Edge From="41" To="42" Label="Source1" />
-      <Edge From="42" To="43" Label="Source2" />
+      <Edge From="40" To="41" Label="Source1" />
+      <Edge From="41" To="42" Label="Source2" />
+      <Edge From="42" To="43" Label="Source4" />
       <Edge From="43" To="44" Label="Source1" />
       <Edge From="44" To="45" Label="Source1" />
       <Edge From="44" To="46" Label="Source1" />
