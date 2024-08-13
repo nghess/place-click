@@ -147,7 +147,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>30</Value>
+          <Value>15</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
@@ -161,7 +161,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>30</Value>
+          <Value>15</Value>
         </Operand>
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">

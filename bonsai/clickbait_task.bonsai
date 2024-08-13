@@ -63,7 +63,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>T:\clickbait\raw_videos\20240808_1000_Shaping 3_camera.avi</cv:FileName>
+          <cv:FileName>T:\clickbait\raw_videos\20240806_1003_Shaping 1_camera.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -137,6 +137,9 @@ def process(value):
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:AnalogInput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
           <ard:Pin>0</ard:Pin>
@@ -144,11 +147,8 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>15</Value>
         </Operand>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Sample" />
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
         <Name>Poke Left</Name>
@@ -161,32 +161,19 @@ def process(value):
       </Expression>
       <Expression xsi:type="LessThan">
         <Operand xsi:type="IntProperty">
-          <Value>10</Value>
+          <Value>15</Value>
         </Operand>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Sample" />
       </Expression>
       <Expression xsi:type="rx:AsyncSubject">
         <Name>Poke Right</Name>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Zip" />
-      </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>Arena Rows</Name>
-      </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>Arena Cols</Name>
-      </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>ITI Min</Name>
-      </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>ITI Max</Name>
+        <Combinator xsi:type="rx:CombineLatest" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
+        <Combinator xsi:type="rx:SampleInterval">
+          <rx:Interval>PT0.1S</rx:Interval>
+        </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:CombineLatest" />
@@ -275,17 +262,24 @@ def draw_targets(tgt_list, grid, img):
   for target in tgt_list:
     CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
 
+# Here we define the number of grid cells to divide the arena by
+grid_x = 5
+grid_y = 2
+
+# And the number of search targets
+num_targets = 1
+
+# Generate grid and targets
+global target_list
+grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
 
 """
 Global variables
 """
-# Initialize trial variables
-global grid_x
-global grid_y
-global grid_cells_x
-global grid_cells_y
-global target_list
-global num_targets
+# Initialize reward variables
+global trial_count
+global reward_left_count
+global reward_right_count
 global reward_state
 global click
 global click_start_time
@@ -294,16 +288,10 @@ global reward_left
 global reward_right
 global reward_left_start_time
 global reward_right_start_time
-global reward_left_count
-global reward_right_count
-global trial_count
 
-grid_x = 1
-grid_y = 1
-grid_cells_x = None
-grid_cells_y = None
-target_list = None
-num_targets = 1
+trial_count = 0
+reward_left_count = 0
+reward_right_count = 0
 reward_state = False
 click = False
 click_start_time = 0
@@ -312,11 +300,8 @@ reward_left = False
 reward_right = False
 reward_left_start_time = 0
 reward_right_start_time = 0
-reward_left_count = 0
-reward_right_count = 0
-trial_count = 0
 
-# ITI and poke timing variables
+# ITI Variables
 global iti_start_time
 global iti_duration
 global in_iti
@@ -349,10 +334,9 @@ Execute task
 @returns(tuple)
 def process(value):
     # Declare global vars
-    global grid_x
-    global grid_y
-    global grid_cells_x
-    global grid_cells_y
+    global trial_count
+    global reward_left_count
+    global reward_right_count
     global target_list
     global reward_state
     global click
@@ -369,33 +353,20 @@ def process(value):
     global in_withdrawal_period
     global prev_poke_left
     global prev_poke_right
-    global reward_left_count
-    global reward_right_count
-    global trial_count
 
-    # Number of grid cells to divide the arena by (defined by 'Experiment Information' GroupWorkFlow)
-    grid_y = value[1][0]
-    grid_x = value[1][1]
-
-    # Number of cells to to tag as search targets
-    num_targets = 1
 
     # Timing-related vars
     current_time = time.time()
     reward_duration_left = 0.046  # 0.046 seconds
     reward_duration_right = 0.05
-    click_duration = 0.1
-    iti_duration_min = 1.0#value.Item2[2]
-    iti_duration_max = 3.0#value.Item2[3]
+    click_duration = 0.05
+    iti_duration_min = 1.0
+    iti_duration_max = 5.0
     withdrawal_duration = 0.5
 
-    # Generate initial grid and targets
-    if target_list is None:
-      grid_cells_x, grid_cells_y, target_list = generate_targets(grid_x, grid_y, num_targets)
-
     # Load realtime variables from Zip node
-    centroid_x, centroid_y, image = value[0][0], value[0][1], value[0][2]
-    poke_left, poke_right = bool(value[0][3]), bool(value[0][4])
+    centroid_x, centroid_y, image = value[0].Item1, value[0].Item2, value[0].Item3
+    poke_left, poke_right = bool(value[1][0]), bool(value[1][1])
 
     # Process grid and canvas
     grid_loc_x, grid_loc_y = None, None
@@ -473,6 +444,14 @@ def process(value):
 </ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Trial Count</ipy:Name>
+        <ipy:Script># Get reward left count
+
+@returns(int)
+def process(value):
+  return value[-3]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Grid Location</ipy:Name>
         <ipy:Script>@returns(tuple)
 def process(value):
@@ -486,12 +465,6 @@ def process(value):
 def process(value):
   return value[3]</ipy:Script>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>7</ard:Pin>
-        </Combinator>
-      </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Water Right</ipy:Name>
         <ipy:Script># Get reward_right state and reward state
@@ -500,27 +473,13 @@ def process(value):
 def process(value):
   return value[4]</ipy:Script>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>8</ard:Pin>
-        </Combinator>
-      </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Click</ipy:Name>
-        <ipy:Script># Get click state (click is always last item in return statement)
+        <ipy:Name>ITI</ipy:Name>
+        <ipy:Script># Get click state (iti is always second to last item in return statement)
 
 @returns(bool)
 def process(value):
-  return value[-4]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Disable">
-        <Builder xsi:type="Combinator">
-          <Combinator xsi:type="ard:DigitalOutput">
-            <ard:PortName>Arduino Mega 2560</ard:PortName>
-            <ard:Pin>12</ard:Pin>
-          </Combinator>
-        </Builder>
+  return value[-2]</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Reward State</ipy:Name>
@@ -531,18 +490,28 @@ def process(value):
   return value[2]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Zip" />
+      </Expression>
+      <Expression xsi:type="io:CsvWriter">
+        <io:FileName>test_csv.csv</io:FileName>
+        <io:Delimiter>,</io:Delimiter>
+        <io:Append>false</io:Append>
+        <io:Overwrite>false</io:Overwrite>
+        <io:Suffix>None</io:Suffix>
+        <io:IncludeHeader>true</io:IncludeHeader>
+        <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6</io:Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>5</ard:Pin>
+          <ard:Pin>7</ard:Pin>
         </Combinator>
       </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>ITI</ipy:Name>
-        <ipy:Script># Get click state (iti is always second to last item in return statement)
-
-@returns(bool)
-def process(value):
-  return value[-5]</ipy:Script>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>8</ard:Pin>
+        </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
@@ -550,21 +519,25 @@ def process(value):
           <ard:Pin>6</ard:Pin>
         </Combinator>
       </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Reward Left Count</ipy:Name>
-        <ipy:Script># Get reward left count
-
-@returns(int)
-def process(value):
-  return value[-2]</ipy:Script>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>5</ard:Pin>
+        </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Trial Count</ipy:Name>
-        <ipy:Script># Get reward left count
+        <ipy:Name>Click</ipy:Name>
+        <ipy:Script># Get click state (click is always last item in return statement)
 
-@returns(int)
+@returns(bool)
 def process(value):
-  return value[-3]</ipy:Script>
+  return value[7]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>12</ard:Pin>
+        </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Reward Right Count</ipy:Name>
@@ -573,6 +546,14 @@ def process(value):
 @returns(int)
 def process(value):
   return value[-1]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Reward Left Count</ipy:Name>
+        <ipy:Script># Get reward left count
+
+@returns(int)
+def process(value):
+  return value[-2]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="eph:Rhd2000EvalBoard">
@@ -613,7 +594,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="dsp:MatrixWriter">
-          <dsp:Path>T:\clickbait\ephys_recordings\none\1000\Shaping 3\20240808_1000_Shaping 3_Ephys.bin</dsp:Path>
+          <dsp:Path>T:\clickbait\ephys_recordings\none\1003\Shaping 1\20240806_1003_Shaping 1_Ephys.bin</dsp:Path>
           <dsp:Suffix>None</dsp:Suffix>
           <dsp:Overwrite>true</dsp:Overwrite>
           <dsp:Layout>ColumnMajor</dsp:Layout>
@@ -667,7 +648,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>20240808</Value>
+                <Value>20240806</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -782,7 +763,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>1000</Value>
+                <Value>1003</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -818,7 +799,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>Shaping 3</Value>
+                <Value>Shaping 1</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -888,71 +869,6 @@ def process(value):
           </Edges>
         </Workflow>
       </Expression>
-      <Expression xsi:type="GroupWorkflow">
-        <Name>Experiment Information</Name>
-        <Workflow>
-          <Nodes>
-            <Expression xsi:type="ExternalizedMapping">
-              <Property Name="Value" DisplayName="Arena Rows" />
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="IntProperty">
-                <Value>2</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="rx:ReplaySubject">
-              <Name>Arena Rows</Name>
-              <rx:BufferSize xsi:nil="true" />
-            </Expression>
-            <Expression xsi:type="ExternalizedMapping">
-              <Property Name="Value" DisplayName="Arena Columns" />
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="IntProperty">
-                <Value>5</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="rx:ReplaySubject">
-              <Name>Arena Cols</Name>
-              <rx:BufferSize xsi:nil="true" />
-            </Expression>
-            <Expression xsi:type="ExternalizedMapping">
-              <Property Name="Value" DisplayName="Minimum ITI" Description="Minimum ITI in seconds" />
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="FloatProperty">
-                <Value>1</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="rx:ReplaySubject">
-              <Name>ITI Min</Name>
-              <rx:BufferSize xsi:nil="true" />
-            </Expression>
-            <Expression xsi:type="ExternalizedMapping">
-              <Property Name="Value" DisplayName="Maximum ITI" Description="Maximum ITI in seconds" />
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="FloatProperty">
-                <Value>3</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="rx:ReplaySubject">
-              <Name>ITI Max</Name>
-              <rx:BufferSize xsi:nil="true" />
-            </Expression>
-          </Nodes>
-          <Edges>
-            <Edge From="0" To="1" Label="Source1" />
-            <Edge From="1" To="2" Label="Source1" />
-            <Edge From="3" To="4" Label="Source1" />
-            <Edge From="4" To="5" Label="Source1" />
-            <Edge From="6" To="7" Label="Source1" />
-            <Edge From="7" To="8" Label="Source1" />
-            <Edge From="9" To="10" Label="Source1" />
-            <Edge From="10" To="11" Label="Source1" />
-          </Edges>
-        </Workflow>
-      </Expression>
     </Nodes>
     <Edges>
       <Edge From="1" To="2" Label="Source1" />
@@ -976,50 +892,50 @@ def process(value):
       <Edge From="18" To="19" Label="Source1" />
       <Edge From="19" To="20" Label="Source1" />
       <Edge From="19" To="21" Label="Source1" />
-      <Edge From="20" To="25" Label="Source2" />
-      <Edge From="20" To="31" Label="Source1" />
-      <Edge From="21" To="29" Label="Source2" />
-      <Edge From="21" To="31" Label="Source2" />
-      <Edge From="22" To="31" Label="Source3" />
-      <Edge From="23" To="24" Label="Source1" />
+      <Edge From="20" To="23" Label="Source1" />
+      <Edge From="21" To="23" Label="Source2" />
+      <Edge From="22" To="23" Label="Source3" />
+      <Edge From="23" To="32" Label="Source1" />
       <Edge From="24" To="25" Label="Source1" />
       <Edge From="25" To="26" Label="Source1" />
-      <Edge From="26" To="31" Label="Source4" />
+      <Edge From="26" To="30" Label="Source1" />
       <Edge From="27" To="28" Label="Source1" />
       <Edge From="28" To="29" Label="Source1" />
-      <Edge From="29" To="30" Label="Source1" />
-      <Edge From="30" To="31" Label="Source5" />
-      <Edge From="31" To="37" Label="Source1" />
-      <Edge From="32" To="36" Label="Source1" />
-      <Edge From="33" To="36" Label="Source2" />
-      <Edge From="34" To="36" Label="Source3" />
-      <Edge From="35" To="36" Label="Source4" />
-      <Edge From="36" To="37" Label="Source2" />
-      <Edge From="37" To="38" Label="Source1" />
-      <Edge From="38" To="39" Label="Source1" />
-      <Edge From="38" To="40" Label="Source1" />
-      <Edge From="38" To="41" Label="Source1" />
-      <Edge From="38" To="43" Label="Source1" />
-      <Edge From="38" To="45" Label="Source1" />
-      <Edge From="38" To="47" Label="Source1" />
-      <Edge From="38" To="49" Label="Source1" />
-      <Edge From="38" To="51" Label="Source1" />
-      <Edge From="38" To="52" Label="Source1" />
-      <Edge From="38" To="53" Label="Source1" />
+      <Edge From="29" To="30" Label="Source2" />
+      <Edge From="30" To="31" Label="Source1" />
+      <Edge From="31" To="32" Label="Source2" />
+      <Edge From="32" To="33" Label="Source1" />
+      <Edge From="33" To="34" Label="Source1" />
+      <Edge From="33" To="35" Label="Source1" />
+      <Edge From="33" To="36" Label="Source1" />
+      <Edge From="33" To="37" Label="Source1" />
+      <Edge From="33" To="38" Label="Source1" />
+      <Edge From="33" To="39" Label="Source1" />
+      <Edge From="33" To="40" Label="Source1" />
+      <Edge From="33" To="47" Label="Source1" />
+      <Edge From="33" To="49" Label="Source1" />
+      <Edge From="33" To="50" Label="Source1" />
+      <Edge From="35" To="41" Label="Source1" />
+      <Edge From="36" To="41" Label="Source2" />
+      <Edge From="37" To="41" Label="Source3" />
+      <Edge From="37" To="43" Label="Source1" />
+      <Edge From="38" To="41" Label="Source4" />
+      <Edge From="38" To="44" Label="Source1" />
+      <Edge From="39" To="41" Label="Source5" />
+      <Edge From="39" To="45" Label="Source1" />
+      <Edge From="40" To="41" Label="Source6" />
+      <Edge From="40" To="46" Label="Source1" />
       <Edge From="41" To="42" Label="Source1" />
-      <Edge From="43" To="44" Label="Source1" />
-      <Edge From="45" To="46" Label="Source1" />
       <Edge From="47" To="48" Label="Source1" />
-      <Edge From="49" To="50" Label="Source1" />
-      <Edge From="54" To="55" Label="Source1" />
-      <Edge From="55" To="63" Label="Source1" />
-      <Edge From="56" To="58" Label="Source1" />
-      <Edge From="57" To="58" Label="Source2" />
+      <Edge From="51" To="52" Label="Source1" />
+      <Edge From="52" To="60" Label="Source1" />
+      <Edge From="53" To="55" Label="Source1" />
+      <Edge From="54" To="55" Label="Source2" />
+      <Edge From="55" To="56" Label="Source1" />
+      <Edge From="56" To="57" Label="Source1" />
+      <Edge From="57" To="58" Label="Source1" />
       <Edge From="58" To="59" Label="Source1" />
-      <Edge From="59" To="60" Label="Source1" />
-      <Edge From="60" To="61" Label="Source1" />
-      <Edge From="61" To="62" Label="Source1" />
-      <Edge From="62" To="63" Label="Source2" />
+      <Edge From="59" To="60" Label="Source2" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
