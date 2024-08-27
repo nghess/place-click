@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.8.5"
+<WorkflowBuilder Version="2.8.1"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xmlns:ard="clr-namespace:Bonsai.Arduino;assembly=Bonsai.Arduino"
-                 xmlns:spk="clr-namespace:Bonsai.Spinnaker;assembly=Bonsai.Spinnaker"
+                 xmlns:p1="clr-namespace:Bonsai.Spinnaker;assembly=Bonsai.Spinnaker"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
                  xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:io="clr-namespace:Bonsai.IO;assembly=Bonsai.System"
                  xmlns:ipy="clr-namespace:Bonsai.Scripting.IronPython;assembly=Bonsai.Scripting.IronPython"
-                 xmlns:eph="clr-namespace:Bonsai.Ephys;assembly=Bonsai.Ephys"
+                 xmlns:p2="clr-namespace:Bonsai.Ephys;assembly=Bonsai.Ephys"
                  xmlns:dsp="clr-namespace:Bonsai.Dsp;assembly=Bonsai.Dsp"
                  xmlns="https://bonsai-rx.org/2018/workflow">
   <Workflow>
@@ -21,9 +21,9 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="spk:SpinnakerCapture">
-          <spk:Index xsi:nil="true" />
-          <spk:ColorProcessing>Default</spk:ColorProcessing>
+        <Combinator xsi:type="p1:SpinnakerCapture">
+          <p1:Index xsi:nil="true" />
+          <p1:ColorProcessing>Default</p1:ColorProcessing>
         </Combinator>
       </Expression>
       <Expression xsi:type="MemberSelector">
@@ -465,7 +465,7 @@ def process(value):
     prev_poke_left, prev_poke_right = poke_left, poke_right
     drinking = poke_left or poke_right
 
-    return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, drinking, in_iti, click, tuple(target_list), trial_count, reward_left_count, reward_right_count)</ipy:Script>
+    return (canvas, (grid_loc_x, grid_loc_y), reward_state, reward_left, reward_right, poke_left, poke_right, drinking, in_iti, click, tuple(target_list), trial_count, reward_left_count, reward_right_count)</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Grid Visualization</ipy:Name>
@@ -506,11 +506,11 @@ def process(value):
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>ITI</ipy:Name>
-        <ipy:Script># Get click state (iti is always second to last item in return statement)
+        <ipy:Script># ITI status
 
 @returns(bool)
 def process(value):
-  return value[-2]</ipy:Script>
+  return value[8]</ipy:Script>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Reward State</ipy:Name>
@@ -528,6 +528,30 @@ def process(value):
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Targets</ipy:Name>
+        <ipy:Script>@returns(str)
+def process(value):
+  target_list = ""
+  targets = value[8]
+  for ii in range(len(targets)):
+    target_list += str(targets[ii])
+    target_list += ","
+    
+  return target_list</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Poke Left</ipy:Name>
+        <ipy:Script>@returns(str)
+def process(value):
+  target_list = ""
+  targets = value[8]
+  for ii in range(len(targets)):
+    target_list += str(targets[ii])
+    target_list += ","
+    
+  return target_list</ipy:Script>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Poke Right</ipy:Name>
         <ipy:Script>@returns(str)
 def process(value):
   target_list = ""
@@ -630,18 +654,18 @@ def process(value):
   return value[1]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="eph:Rhd2000EvalBoard">
-          <eph:BitFileName>C:\Program Files\Open Ephys\shared\rhd2000.bit</eph:BitFileName>
-          <eph:SampleRate>SampleRate30000Hz</eph:SampleRate>
-          <eph:ExternalFastSettleEnabled>false</eph:ExternalFastSettleEnabled>
-          <eph:LowerBandwidth>0.01</eph:LowerBandwidth>
-          <eph:UpperBandwidth>7500</eph:UpperBandwidth>
-          <eph:DspCutoffFrequency>1</eph:DspCutoffFrequency>
-          <eph:DspEnabled>true</eph:DspEnabled>
-          <eph:CableDelayA>4</eph:CableDelayA>
-          <eph:CableDelayB xsi:nil="true" />
-          <eph:CableDelayC xsi:nil="true" />
-          <eph:CableDelayD xsi:nil="true" />
+        <Combinator xsi:type="p2:Rhd2000EvalBoard">
+          <p2:BitFileName>C:\Program Files\Open Ephys\shared\rhd2000.bit</p2:BitFileName>
+          <p2:SampleRate>SampleRate30000Hz</p2:SampleRate>
+          <p2:ExternalFastSettleEnabled>false</p2:ExternalFastSettleEnabled>
+          <p2:LowerBandwidth>0.01</p2:LowerBandwidth>
+          <p2:UpperBandwidth>7500</p2:UpperBandwidth>
+          <p2:DspCutoffFrequency>1</p2:DspCutoffFrequency>
+          <p2:DspEnabled>true</p2:DspEnabled>
+          <p2:CableDelayA>4</p2:CableDelayA>
+          <p2:CableDelayB xsi:nil="true" />
+          <p2:CableDelayC xsi:nil="true" />
+          <p2:CableDelayD xsi:nil="true" />
         </Combinator>
       </Expression>
       <Expression xsi:type="MemberSelector">
@@ -1056,40 +1080,44 @@ def process(value):
       <Edge From="44" To="50" Label="Source1" />
       <Edge From="44" To="51" Label="Source1" />
       <Edge From="44" To="53" Label="Source1" />
-      <Edge From="44" To="67" Label="Source1" />
+      <Edge From="44" To="54" Label="Source1" />
+      <Edge From="44" To="55" Label="Source1" />
       <Edge From="44" To="69" Label="Source1" />
-      <Edge From="44" To="70" Label="Source1" />
       <Edge From="44" To="71" Label="Source1" />
-      <Edge From="46" To="54" Label="Source1" />
-      <Edge From="47" To="54" Label="Source2" />
-      <Edge From="47" To="63" Label="Source1" />
-      <Edge From="48" To="54" Label="Source3" />
-      <Edge From="48" To="64" Label="Source1" />
-      <Edge From="49" To="54" Label="Source4" />
-      <Edge From="49" To="65" Label="Source1" />
-      <Edge From="50" To="54" Label="Source5" />
-      <Edge From="50" To="66" Label="Source1" />
+      <Edge From="44" To="72" Label="Source1" />
+      <Edge From="44" To="73" Label="Source1" />
+      <Edge From="46" To="56" Label="Source1" />
+      <Edge From="47" To="56" Label="Source2" />
+      <Edge From="47" To="65" Label="Source1" />
+      <Edge From="48" To="56" Label="Source3" />
+      <Edge From="48" To="66" Label="Source1" />
+      <Edge From="49" To="56" Label="Source4" />
+      <Edge From="49" To="67" Label="Source1" />
+      <Edge From="50" To="56" Label="Source5" />
+      <Edge From="50" To="68" Label="Source1" />
       <Edge From="51" To="52" Label="Source1" />
-      <Edge From="52" To="54" Label="Source6" />
-      <Edge From="53" To="54" Label="Source7" />
-      <Edge From="54" To="62" Label="Source1" />
-      <Edge From="55" To="57" Label="Source1" />
-      <Edge From="56" To="57" Label="Source2" />
-      <Edge From="57" To="58" Label="Source1" />
-      <Edge From="58" To="59" Label="Source1" />
+      <Edge From="52" To="56" Label="Source6" />
+      <Edge From="53" To="56" Label="Source7" />
+      <Edge From="54" To="56" Label="Source8" />
+      <Edge From="55" To="56" Label="Source9" />
+      <Edge From="56" To="64" Label="Source1" />
+      <Edge From="57" To="59" Label="Source1" />
+      <Edge From="58" To="59" Label="Source2" />
       <Edge From="59" To="60" Label="Source1" />
       <Edge From="60" To="61" Label="Source1" />
-      <Edge From="61" To="62" Label="Source2" />
-      <Edge From="67" To="68" Label="Source1" />
-      <Edge From="72" To="73" Label="Source1" />
-      <Edge From="73" To="81" Label="Source1" />
-      <Edge From="74" To="76" Label="Source1" />
-      <Edge From="75" To="76" Label="Source2" />
-      <Edge From="76" To="77" Label="Source1" />
-      <Edge From="77" To="78" Label="Source1" />
+      <Edge From="61" To="62" Label="Source1" />
+      <Edge From="62" To="63" Label="Source1" />
+      <Edge From="63" To="64" Label="Source2" />
+      <Edge From="69" To="70" Label="Source1" />
+      <Edge From="74" To="75" Label="Source1" />
+      <Edge From="75" To="83" Label="Source1" />
+      <Edge From="76" To="78" Label="Source1" />
+      <Edge From="77" To="78" Label="Source2" />
       <Edge From="78" To="79" Label="Source1" />
       <Edge From="79" To="80" Label="Source1" />
-      <Edge From="80" To="81" Label="Source2" />
+      <Edge From="80" To="81" Label="Source1" />
+      <Edge From="81" To="82" Label="Source1" />
+      <Edge From="82" To="83" Label="Source2" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
