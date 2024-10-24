@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.8.1"
+<WorkflowBuilder Version="2.8.5"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                  xmlns:ard="clr-namespace:Bonsai.Arduino;assembly=Bonsai.Arduino"
-                 xmlns:p1="clr-namespace:Bonsai.Spinnaker;assembly=Bonsai.Spinnaker"
+                 xmlns:pylon="clr-namespace:Bonsai.Pylon;assembly=Bonsai.Pylon"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
                  xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
                  xmlns:io="clr-namespace:Bonsai.IO;assembly=Bonsai.System"
                  xmlns:ipy="clr-namespace:Bonsai.Scripting.IronPython;assembly=Bonsai.Scripting.IronPython"
-                 xmlns:p2="clr-namespace:Bonsai.Ephys;assembly=Bonsai.Ephys"
+                 xmlns:eph="clr-namespace:Bonsai.Ephys;assembly=Bonsai.Ephys"
                  xmlns:dsp="clr-namespace:Bonsai.Dsp;assembly=Bonsai.Dsp"
                  xmlns="https://bonsai-rx.org/2018/workflow">
   <Workflow>
@@ -21,9 +21,10 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="p1:SpinnakerCapture">
-          <p1:Index xsi:nil="true" />
-          <p1:ColorProcessing>Default</p1:ColorProcessing>
+        <Combinator xsi:type="pylon:PylonCapture">
+          <pylon:SerialNumber>24714376</pylon:SerialNumber>
+          <pylon:ParameterFile>C:\Users\smear\OneDrive\Documents\acA2040-90umNIR_24714376.pfs</pylon:ParameterFile>
+          <pylon:GrabStrategy>OneByOne</pylon:GrabStrategy>
         </Combinator>
       </Expression>
       <Expression xsi:type="MemberSelector">
@@ -63,7 +64,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>T:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.avi</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -107,7 +108,7 @@
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>T:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session_video_timestamp.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session_video_timestamp.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>false</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -540,9 +541,10 @@ def process(value):
       <Expression xsi:type="MemberSelector">
         <Selector>Timestamp.DateTime</Selector>
       </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Targets</ipy:Name>
-        <ipy:Script>@returns(str)
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="ipy:PythonTransform">
+          <ipy:Name>Targets</ipy:Name>
+          <ipy:Script>@returns(str)
 def process(value):
   target_list = ""
   targets = value[8]
@@ -551,15 +553,20 @@ def process(value):
     target_list += ","
     
   return target_list</ipy:Script>
+        </Builder>
       </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Mouse Centroid</ipy:Name>
-        <ipy:Script>@returns(tuple)
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="ipy:PythonTransform">
+          <ipy:Name>Mouse Centroid</ipy:Name>
+          <ipy:Script>@returns(tuple)
 def process(value):
   return value[1]</ipy:Script>
+        </Builder>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Zip" />
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="rx:Zip" />
+        </Builder>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
         <Name>SessionData</Name>
@@ -580,14 +587,16 @@ def process(value):
           <Property Name="FileName" />
         </PropertyMappings>
       </Expression>
-      <Expression xsi:type="io:CsvWriter">
-        <io:FileName>T:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.csv</io:FileName>
-        <io:Delimiter>,</io:Delimiter>
-        <io:Append>false</io:Append>
-        <io:Overwrite>false</io:Overwrite>
-        <io:Suffix>None</io:Suffix>
-        <io:IncludeHeader>true</io:IncludeHeader>
-        <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6,Item7</io:Selector>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="io:CsvWriter">
+          <io:FileName>T:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.csv</io:FileName>
+          <io:Delimiter>,</io:Delimiter>
+          <io:Append>false</io:Append>
+          <io:Overwrite>false</io:Overwrite>
+          <io:Suffix>None</io:Suffix>
+          <io:IncludeHeader>true</io:IncludeHeader>
+          <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6,Item7</io:Selector>
+        </Builder>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
@@ -644,18 +653,18 @@ def process(value):
   return value[-2]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="p2:Rhd2000EvalBoard">
-          <p2:BitFileName>C:\Program Files\Open Ephys\shared\rhd2000.bit</p2:BitFileName>
-          <p2:SampleRate>SampleRate30000Hz</p2:SampleRate>
-          <p2:ExternalFastSettleEnabled>false</p2:ExternalFastSettleEnabled>
-          <p2:LowerBandwidth>0.01</p2:LowerBandwidth>
-          <p2:UpperBandwidth>7500</p2:UpperBandwidth>
-          <p2:DspCutoffFrequency>1</p2:DspCutoffFrequency>
-          <p2:DspEnabled>true</p2:DspEnabled>
-          <p2:CableDelayA>4</p2:CableDelayA>
-          <p2:CableDelayB xsi:nil="true" />
-          <p2:CableDelayC xsi:nil="true" />
-          <p2:CableDelayD xsi:nil="true" />
+        <Combinator xsi:type="eph:Rhd2000EvalBoard">
+          <eph:BitFileName>C:\Program Files\Open Ephys\shared\rhd2000.bit</eph:BitFileName>
+          <eph:SampleRate>SampleRate30000Hz</eph:SampleRate>
+          <eph:ExternalFastSettleEnabled>false</eph:ExternalFastSettleEnabled>
+          <eph:LowerBandwidth>0.01</eph:LowerBandwidth>
+          <eph:UpperBandwidth>7500</eph:UpperBandwidth>
+          <eph:DspCutoffFrequency>1</eph:DspCutoffFrequency>
+          <eph:DspEnabled>true</eph:DspEnabled>
+          <eph:CableDelayA>4</eph:CableDelayA>
+          <eph:CableDelayB xsi:nil="true" />
+          <eph:CableDelayC xsi:nil="true" />
+          <eph:CableDelayD xsi:nil="true" />
         </Combinator>
       </Expression>
       <Expression xsi:type="MemberSelector">
@@ -682,7 +691,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="dsp:MatrixWriter">
-          <dsp:Path>T:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Ephys.bin</dsp:Path>
+          <dsp:Path>D:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Ephys.bin</dsp:Path>
           <dsp:Suffix>None</dsp:Suffix>
           <dsp:Overwrite>true</dsp:Overwrite>
           <dsp:Layout>ColumnMajor</dsp:Layout>
@@ -788,7 +797,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>T:/clickbait/data/</Value>
+                <Value>D:/clickbait/data/</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="Combinator">
@@ -947,7 +956,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>T:/clickbait/raw_videos/</Value>
+                <Value>D:/clickbait/raw_videos/</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
