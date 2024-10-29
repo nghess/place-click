@@ -246,8 +246,8 @@ class GridMaze:
         self.cells = [
             (Point(x * cellsize_x, y * cellsize_y), 
              Point((x + 1) * cellsize_x, (y + 1) * cellsize_y))
-            for y in range(self.shape[1])
-            for x in range(self.shape[0])
+            for y in range(1,self.shape[1]-1)
+            for x in range(1,self.shape[0]-1)
         ]
 
 def draw_grid(grid, img):
@@ -264,16 +264,23 @@ def get_grid_location(grid, centroid_x, centroid_y, tgt_list, img):
     cell_width = grid.bounds[0] // grid.shape[0]
     cell_height = grid.bounds[1] // grid.shape[1]
     
-    grid_x = int(centroid_x // cell_width)
-    grid_y = int(centroid_y // cell_height)
+    # Calculate grid position accounting for border
+    grid_x = int(centroid_x // cell_width) - 1  # Subtract 1 to account for border
+    grid_y = int(centroid_y // cell_height) - 1  # Subtract 1 to account for border
     
-    # Get current cell and draw it
-    if 0 &lt;= grid_x &lt; grid.shape[0] and 0 &lt;= grid_y &lt; grid.shape[1]:
-        cell = grid.cells[grid_y * grid.shape[0] + grid_x]
-        CV.Rectangle(img, cell[0], cell[1], mouse_loc_color, thickness=-1)
-    
-    # Check if current cell is in target list. If so, remove from target list
-    tgt_list = [tgt for tgt in tgt_list if tgt != grid_y * grid.shape[0] + grid_x]
+    # Calculate the index in the cells list
+    # Only consider valid inner grid cells
+    if 0 &lt;= grid_x &lt; grid.shape[0]-2 and 0 &lt;= grid_y &lt; grid.shape[1]-2:
+        # Calculate index in the flattened cells list
+        cell_index = grid_y * (grid.shape[0]-2) + grid_x
+        
+        # Check if index is valid for the cells list
+        if 0 &lt;= cell_index &lt; len(grid.cells):
+            cell = grid.cells[cell_index]
+            CV.Rectangle(img, cell[0], cell[1], mouse_loc_color, thickness=-1)
+            
+            # Update target list
+            tgt_list = [tgt for tgt in tgt_list if tgt != cell_index]
     
     return grid_x, grid_y, tgt_list
 
@@ -294,7 +301,7 @@ Define targets
 
 def generate_targets(grid_cells_x, grid_cells_y, num_tgt):
 
-  possible_targets = grid_cells_x * grid_cells_y
+  possible_targets = (grid_cells_x-2) * (grid_cells_y-2)
   tgt_list = []
 
   for ii in range(num_targets):
@@ -308,8 +315,8 @@ def draw_targets(tgt_list, grid, img):
     CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
 
 # Here we define the number of grid cells to divide the arena by
-grid_x = 5
-grid_y = 12
+grid_x = 7
+grid_y = 16
 
 # And the number of search targets
 num_targets = 1
@@ -406,7 +413,7 @@ def process(value):
     reward_duration_right = 0.05
     click_duration = 0.05
     iti_duration_min = 1.0
-    iti_duration_max = 5.0
+    iti_duration_max = 1.0
     withdrawal_duration = 0.5
 
     # Load realtime variables from Zip node
@@ -496,21 +503,8 @@ def process(value):
 def process(value):
   return value[-3]</ipy:Script>
       </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Water Left</ipy:Name>
-        <ipy:Script># Get reward_left state
-
-@returns(bool)
-def process(value):
-  return value[3]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Water Right</ipy:Name>
-        <ipy:Script># Get reward_right state and reward state
-
-@returns(bool)
-def process(value):
-  return value[4]</ipy:Script>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Timestamp" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Poke Left</ipy:Name>
@@ -540,6 +534,18 @@ def process(value):
 def process(value):
   return value[1]</ipy:Script>
       </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Targets</ipy:Name>
+        <ipy:Script>@returns(str)
+def process(value):
+  target_list = ""
+  targets = value[10]
+  for ii in range(len(targets)):
+    target_list += str(targets[ii])
+    target_list += ","
+    
+  return target_list</ipy:Script>
+      </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:Zip" />
       </Expression>
@@ -562,20 +568,38 @@ def process(value):
           <Property Name="FileName" />
         </PropertyMappings>
       </Expression>
-      <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.csv</io:FileName>
-        <io:Delimiter>,</io:Delimiter>
-        <io:Append>false</io:Append>
-        <io:Overwrite>false</io:Overwrite>
-        <io:Suffix>None</io:Suffix>
-        <io:IncludeHeader>true</io:IncludeHeader>
-        <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6,Item7</io:Selector>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="io:CsvWriter">
+          <io:FileName>D:\clickbait\data\no_implant\1003\Shaping 1\20240806_1003_Shaping 1_Session.csv</io:FileName>
+          <io:Delimiter>,</io:Delimiter>
+          <io:Append>false</io:Append>
+          <io:Overwrite>false</io:Overwrite>
+          <io:Suffix>None</io:Suffix>
+          <io:IncludeHeader>true</io:IncludeHeader>
+          <io:Selector>Item1,Item2,Item3,Item4,Item5,Item6,Item7</io:Selector>
+        </Builder>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Water Left</ipy:Name>
+        <ipy:Script># Get reward_left state
+
+@returns(bool)
+def process(value):
+  return value[3]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
           <ard:Pin>7</ard:Pin>
         </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Water Right</ipy:Name>
+        <ipy:Script># Get reward_right state and reward state
+
+@returns(bool)
+def process(value):
+  return value[4]</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="ard:DigitalOutput">
@@ -632,21 +656,6 @@ def process(value):
 @returns(int)
 def process(value):
   return value[-2]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Timestamp" />
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Targets</ipy:Name>
-        <ipy:Script>@returns(str)
-def process(value):
-  target_list = ""
-  targets = value[10]
-  for ii in range(len(targets)):
-    target_list += str(targets[ii])
-    target_list += ","
-    
-  return target_list</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="eph:Rhd2000EvalBoard">
@@ -1076,22 +1085,20 @@ def process(value):
       <Edge From="45" To="51" Label="Source1" />
       <Edge From="45" To="52" Label="Source1" />
       <Edge From="45" To="53" Label="Source1" />
-      <Edge From="45" To="66" Label="Source1" />
+      <Edge From="45" To="63" Label="Source1" />
+      <Edge From="45" To="65" Label="Source1" />
       <Edge From="45" To="68" Label="Source1" />
       <Edge From="45" To="70" Label="Source1" />
-      <Edge From="45" To="71" Label="Source1" />
       <Edge From="45" To="72" Label="Source1" />
       <Edge From="45" To="73" Label="Source1" />
       <Edge From="47" To="54" Label="Source1" />
       <Edge From="48" To="54" Label="Source2" />
-      <Edge From="48" To="63" Label="Source1" />
       <Edge From="49" To="54" Label="Source3" />
-      <Edge From="49" To="64" Label="Source1" />
       <Edge From="50" To="54" Label="Source4" />
       <Edge From="51" To="54" Label="Source5" />
+      <Edge From="51" To="67" Label="Source1" />
       <Edge From="52" To="54" Label="Source6" />
-      <Edge From="52" To="65" Label="Source1" />
-      <Edge From="53" To="54" Label="Source8" />
+      <Edge From="53" To="54" Label="Source7" />
       <Edge From="54" To="62" Label="Source1" />
       <Edge From="55" To="57" Label="Source1" />
       <Edge From="56" To="57" Label="Source2" />
@@ -1100,8 +1107,10 @@ def process(value):
       <Edge From="59" To="60" Label="Source1" />
       <Edge From="60" To="61" Label="Source1" />
       <Edge From="61" To="62" Label="Source2" />
-      <Edge From="66" To="67" Label="Source1" />
+      <Edge From="63" To="64" Label="Source1" />
+      <Edge From="65" To="66" Label="Source1" />
       <Edge From="68" To="69" Label="Source1" />
+      <Edge From="70" To="71" Label="Source1" />
       <Edge From="74" To="75" Label="Source1" />
       <Edge From="75" To="83" Label="Source1" />
       <Edge From="76" To="78" Label="Source1" />
