@@ -136,7 +136,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing.avi</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -164,7 +164,7 @@
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing_video_timestamp.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_video_timestamp.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -187,15 +187,32 @@
         <ipy:Script>import clr
 clr.AddReference("System.Windows.Forms")
 from System.Windows.Forms import SendKeys
-
+from System.Diagnostics import Process
 from System import TimeSpan, DateTime
 import time
+
+import ctypes
+user32 = ctypes.WinDLL('user32', use_last_error=True)
+
+
+
+def focus_window(window_title):
+    # Find all windows with matching title
+    processes = Process.GetProcesses()
+    for process in processes:
+        if process.MainWindowTitle.lower().find(window_title.lower()) != -1:
+            # Bring window to front and focus it
+            hwnd = process.MainWindowHandle.ToInt32()
+            if hwnd:
+                user32.SetForegroundWindow(hwnd)
+                return True
+    return False
 
 @returns(str)
 def process(value):
     now = value[1]
     start_time = value[0][0]
-    duration = TimeSpan.FromMinutes(value[0][1])
+    duration = TimeSpan.FromMinutes(value[0][1]) + TimeSpan.FromMinutes(.16)  # Add 10 seconds to pad startup time
 
     format_string = "{minutes:02d}:{seconds:02d}"
 
@@ -206,7 +223,8 @@ def process(value):
     seconds = int(remaining.Seconds)
     countdown = str("Time remaining: " + format_string.format(minutes=minutes, seconds=seconds))
 
-    if seconds &lt;= 0:
+    if minutes &lt;= 0 and seconds &lt;= 0:
+        focus_window("clickbait_task_diet.bonsai")
         countdown = "Time's up!"
         SendKeys.SendWait("+{F5}")
 
@@ -618,7 +636,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:SaveImage">
-          <cv:FileName>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing_occupancy.jpg</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_occupancy.jpg</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
         </Combinator>
       </Expression>
@@ -676,7 +694,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing_eventsA.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_eventsA.csv</io:FileName>
         <io:Delimiter>,</io:Delimiter>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
@@ -800,7 +818,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="io:WriteAllText">
-          <io:Path>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing_trialcounts.txt</io:Path>
+          <io:Path>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_trialcounts.txt</io:Path>
           <io:Overwrite>true</io:Overwrite>
           <io:Append>false</io:Append>
         </Combinator>
@@ -817,7 +835,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\42\Intan Testing\11032024_42_Intan Testing_eventsB.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_eventsB.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -832,7 +850,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>11032024</Value>
+                <Value>11042024</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -876,7 +894,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="FloatProperty">
-                <Value>0.25</Value>
+                <Value>1.5</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -888,7 +906,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>42</Value>
+                <Value>nov4test1</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -912,7 +930,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>Intan Testing</Value>
+                <Value>nov4test1</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
