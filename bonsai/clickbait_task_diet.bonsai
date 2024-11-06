@@ -136,7 +136,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1.avi</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -164,7 +164,7 @@
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_video_timestamp.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1_video_timestamp.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -636,7 +636,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:SaveImage">
-          <cv:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_occupancy.jpg</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1_occupancy.jpg</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
         </Combinator>
       </Expression>
@@ -694,7 +694,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_eventsA.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1_eventsA.csv</io:FileName>
         <io:Delimiter>,</io:Delimiter>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
@@ -714,6 +714,26 @@ def process(value):
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
           <ard:Pin>6</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Reward State</ipy:Name>
+        <ipy:Script># Get reward state
+
+@returns(bool)
+def process(value):
+  return value[2]</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>5</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>4</ard:Pin>
         </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
@@ -742,26 +762,6 @@ def process(value):
         <Combinator xsi:type="ard:DigitalOutput">
           <ard:PortName>Arduino Mega 2560</ard:PortName>
           <ard:Pin>8</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Reward State</ipy:Name>
-        <ipy:Script># Get reward state
-
-@returns(bool)
-def process(value):
-  return value[2]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>5</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>4</ard:Pin>
         </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
@@ -818,7 +818,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="io:WriteAllText">
-          <io:Path>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_trialcounts.txt</io:Path>
+          <io:Path>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1_trialcounts.txt</io:Path>
           <io:Overwrite>true</io:Overwrite>
           <io:Append>false</io:Append>
         </Combinator>
@@ -835,7 +835,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nov4test1\nov4test1\11042024_nov4test1_nov4test1_eventsB.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\test\nov6test1\11052024_test_nov6test1_eventsB.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -850,7 +850,7 @@ def process(value):
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>11042024</Value>
+                <Value>11062024</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -894,7 +894,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="FloatProperty">
-                <Value>1.5</Value>
+                <Value>45</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -906,7 +906,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>nov4test1</Value>
+                <Value>test</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -930,7 +930,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>nov4test1</Value>
+                <Value>nov6test1</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1434,8 +1434,8 @@ def generate():
       <Edge From="49" To="61" Label="Source1" />
       <Edge From="49" To="66" Label="Source1" />
       <Edge From="49" To="68" Label="Source1" />
-      <Edge From="49" To="70" Label="Source1" />
-      <Edge From="49" To="72" Label="Source1" />
+      <Edge From="49" To="71" Label="Source1" />
+      <Edge From="49" To="73" Label="Source1" />
       <Edge From="49" To="75" Label="Source1" />
       <Edge From="49" To="77" Label="Source1" />
       <Edge From="49" To="78" Label="Source1" />
@@ -1455,16 +1455,16 @@ def generate():
       <Edge From="63" To="64" Label="Source1" />
       <Edge From="64" To="65" Label="Source2" />
       <Edge From="66" To="67" Label="Source1" />
-      <Edge From="66" To="84" Label="Source5" />
+      <Edge From="66" To="84" Label="Source1" />
       <Edge From="68" To="69" Label="Source1" />
-      <Edge From="68" To="84" Label="Source1" />
-      <Edge From="70" To="71" Label="Source1" />
-      <Edge From="70" To="84" Label="Source2" />
-      <Edge From="72" To="73" Label="Source1" />
-      <Edge From="72" To="74" Label="Source1" />
-      <Edge From="72" To="84" Label="Source3" />
+      <Edge From="68" To="70" Label="Source1" />
+      <Edge From="68" To="84" Label="Source2" />
+      <Edge From="71" To="72" Label="Source1" />
+      <Edge From="71" To="84" Label="Source3" />
+      <Edge From="73" To="74" Label="Source1" />
+      <Edge From="73" To="84" Label="Source4" />
       <Edge From="75" To="76" Label="Source1" />
-      <Edge From="75" To="84" Label="Source4" />
+      <Edge From="75" To="84" Label="Source5" />
       <Edge From="77" To="79" Label="Source1" />
       <Edge From="78" To="79" Label="Source2" />
       <Edge From="79" To="80" Label="Source1" />
