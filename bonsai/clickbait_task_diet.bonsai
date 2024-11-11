@@ -101,8 +101,8 @@
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:Crop">
           <cv:RegionOfInterest>
-            <cv:X>624</cv:X>
-            <cv:Y>60</cv:Y>
+            <cv:X>578</cv:X>
+            <cv:Y>54</cv:Y>
             <cv:Width>894</cv:Width>
             <cv:Height>1952</cv:Height>
           </cv:RegionOfInterest>
