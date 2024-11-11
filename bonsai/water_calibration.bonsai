@@ -16,11 +16,12 @@
       </Expression>
       <Expression xsi:type="Disable">
         <Builder xsi:type="ipy:PythonSource">
+          <ipy:Name>Initialize</ipy:Name>
           <ipy:Script>import time
 
 @returns(int)
 def generate():
-  time.sleep(.038)
+  #time.sleep(.038)
   yield 0</ipy:Script>
         </Builder>
       </Expression>
@@ -41,6 +42,7 @@ def generate():
       </Expression>
       <Expression xsi:type="Disable">
         <Builder xsi:type="ipy:PythonTransform">
+          <ipy:Name>Left Value Timer</ipy:Name>
           <ipy:Script>import time
 
 @returns(bool)
@@ -68,7 +70,7 @@ def process(value):
       <Expression xsi:type="Disable">
         <Builder xsi:type="Combinator">
           <Combinator xsi:type="rx:Delay">
-            <rx:DueTime>PT0.5S</rx:DueTime>
+            <rx:DueTime>PT1S</rx:DueTime>
           </Combinator>
         </Builder>
       </Expression>
@@ -80,11 +82,12 @@ def process(value):
         </Builder>
       </Expression>
       <Expression xsi:type="ipy:PythonSource">
+        <ipy:Name>Initialize</ipy:Name>
         <ipy:Script>import time
 
 @returns(int)
 def generate():
-  time.sleep(.046)
+  #time.sleep(.046)
   yield 0</ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
@@ -99,6 +102,7 @@ def generate():
         </Combinator>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Right Valve Timer</ipy:Name>
         <ipy:Script>import time
 
 @returns(bool)
@@ -120,7 +124,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:Delay">
-          <rx:DueTime>PT0.5S</rx:DueTime>
+          <rx:DueTime>PT1S</rx:DueTime>
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
