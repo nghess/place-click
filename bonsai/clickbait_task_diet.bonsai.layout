@@ -113,8 +113,8 @@
   <DialogSettings>
     <Visible>true</Visible>
     <Location>
-      <X>679</X>
-      <Y>151</Y>
+      <X>647</X>
+      <Y>185</Y>
     </Location>
     <Size>
       <Width>485</Width>
@@ -287,7 +287,7 @@
     </VisualizerSettings>
   </DialogSettings>
   <DialogSettings>
-    <Visible>false</Visible>
+    <Visible>true</Visible>
     <Location>
       <X>884</X>
       <Y>107</Y>
@@ -297,18 +297,26 @@
       <Height>1070</Height>
     </Size>
     <WindowState>Normal</WindowState>
+    <VisualizerTypeName>Bonsai.Vision.Design.IplImageVisualizer</VisualizerTypeName>
+    <VisualizerSettings>
+      <IplImageVisualizer />
+    </VisualizerSettings>
   </DialogSettings>
   <DialogSettings>
-    <Visible>false</Visible>
+    <Visible>true</Visible>
     <Location>
-      <X>0</X>
-      <Y>0</Y>
+      <X>78</X>
+      <Y>253</Y>
     </Location>
     <Size>
-      <Width>0</Width>
-      <Height>0</Height>
+      <Width>335</Width>
+      <Height>276</Height>
     </Size>
     <WindowState>Normal</WindowState>
+    <VisualizerTypeName>Bonsai.Vision.Design.IplImageVisualizer</VisualizerTypeName>
+    <VisualizerSettings>
+      <IplImageVisualizer />
+    </VisualizerSettings>
   </DialogSettings>
   <DialogSettings>
     <Visible>false</Visible>
@@ -337,12 +345,12 @@
   <DialogSettings>
     <Visible>false</Visible>
     <Location>
-      <X>0</X>
-      <Y>0</Y>
+      <X>51</X>
+      <Y>49</Y>
     </Location>
     <Size>
-      <Width>0</Width>
-      <Height>0</Height>
+      <Width>335</Width>
+      <Height>276</Height>
     </Size>
     <WindowState>Normal</WindowState>
   </DialogSettings>
@@ -541,12 +549,12 @@
   <DialogSettings>
     <Visible>true</Visible>
     <Location>
-      <X>207</X>
-      <Y>152</Y>
+      <X>83</X>
+      <Y>665</Y>
     </Location>
     <Size>
       <Width>484</Width>
-      <Height>1055</Height>
+      <Height>1064</Height>
     </Size>
     <WindowState>Normal</WindowState>
     <VisualizerTypeName>Bonsai.Vision.Design.IplImageVisualizer</VisualizerTypeName>
@@ -569,8 +577,8 @@
   <DialogSettings>
     <Visible>true</Visible>
     <Location>
-      <X>1151</X>
-      <Y>150</Y>
+      <X>1127</X>
+      <Y>918</Y>
     </Location>
     <Size>
       <Width>481</Width>
