@@ -501,7 +501,7 @@ def process(value):
 
     # Timing-related vars
     current_time = time.time()
-    reward_duration_left = 0.049  # 0.046 seconds
+    reward_duration_left = 0.046  # 0.046 seconds
     reward_duration_right = 0.045
     click_duration = 0.05
     iti_duration_min = 1.0

@@ -14,6 +14,57 @@
           <ard:SamplingInterval>10</ard:SamplingInterval>
         </Combinator>
       </Expression>
+      <Expression xsi:type="ipy:PythonSource">
+        <ipy:Name>Initialize</ipy:Name>
+        <ipy:Script>import time
+
+@returns(int)
+def generate():
+  #time.sleep(.038)
+  yield 0</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="BooleanProperty">
+          <Value>true</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM3</ard:PortName>
+          <ard:Pin>7</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="ipy:PythonTransform">
+        <ipy:Name>Left Value Timer</ipy:Name>
+        <ipy:Script>import time
+
+@returns(bool)
+def process(value):
+  time.sleep(.049)
+  return False
+</ipy:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="BooleanProperty">
+          <Value>false</Value>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:DigitalOutput">
+          <ard:PortName>COM3</ard:PortName>
+          <ard:Pin>7</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Delay">
+          <rx:DueTime>PT1S</rx:DueTime>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:RepeatCount">
+          <rx:Count>100</rx:Count>
+        </Combinator>
+      </Expression>
       <Expression xsi:type="Disable">
         <Builder xsi:type="ipy:PythonSource">
           <ipy:Name>Initialize</ipy:Name>
@@ -21,7 +72,7 @@
 
 @returns(int)
 def generate():
-  #time.sleep(.038)
+  #time.sleep(.046)
   yield 0</ipy:Script>
         </Builder>
       </Expression>
@@ -36,18 +87,18 @@ def generate():
         <Builder xsi:type="Combinator">
           <Combinator xsi:type="ard:DigitalOutput">
             <ard:PortName>COM3</ard:PortName>
-            <ard:Pin>7</ard:Pin>
+            <ard:Pin>8</ard:Pin>
           </Combinator>
         </Builder>
       </Expression>
       <Expression xsi:type="Disable">
         <Builder xsi:type="ipy:PythonTransform">
-          <ipy:Name>Left Value Timer</ipy:Name>
+          <ipy:Name>Right Valve Timer</ipy:Name>
           <ipy:Script>import time
 
 @returns(bool)
 def process(value):
-  time.sleep(.046)
+  time.sleep(.045)
   return False
 </ipy:Script>
         </Builder>
@@ -63,7 +114,7 @@ def process(value):
         <Builder xsi:type="Combinator">
           <Combinator xsi:type="ard:DigitalOutput">
             <ard:PortName>COM3</ard:PortName>
-            <ard:Pin>7</ard:Pin>
+            <ard:Pin>8</ard:Pin>
           </Combinator>
         </Builder>
       </Expression>
@@ -80,57 +131,6 @@ def process(value):
             <rx:Count>100</rx:Count>
           </Combinator>
         </Builder>
-      </Expression>
-      <Expression xsi:type="ipy:PythonSource">
-        <ipy:Name>Initialize</ipy:Name>
-        <ipy:Script>import time
-
-@returns(int)
-def generate():
-  #time.sleep(.046)
-  yield 0</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="BooleanProperty">
-          <Value>true</Value>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>COM3</ard:PortName>
-          <ard:Pin>8</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Right Valve Timer</ipy:Name>
-        <ipy:Script>import time
-
-@returns(bool)
-def process(value):
-  time.sleep(.044)
-  return False
-</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="BooleanProperty">
-          <Value>false</Value>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>COM3</ard:PortName>
-          <ard:Pin>8</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Delay">
-          <rx:DueTime>PT1S</rx:DueTime>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:RepeatCount">
-          <rx:Count>100</rx:Count>
-        </Combinator>
       </Expression>
     </Nodes>
     <Edges>
