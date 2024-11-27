@@ -74,7 +74,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="dsp:MatrixWriter">
-          <dsp:Path>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_daq.bin</dsp:Path>
+          <dsp:Path>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_daq.bin</dsp:Path>
           <dsp:Suffix>None</dsp:Suffix>
           <dsp:Overwrite>true</dsp:Overwrite>
           <dsp:Layout>ColumnMajor</dsp:Layout>
@@ -118,7 +118,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4.avi</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -146,7 +146,7 @@
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_video_timestamp.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_video_timestamp.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -214,6 +214,50 @@ def process(value):
 </ipy:Script>
       </Expression>
       <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:ConvertColor">
+          <cv:Conversion>Gray2Bgr</cv:Conversion>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>ElementType</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:AnalogInput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>0</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="LessThan">
+        <Operand xsi:type="IntProperty">
+          <Value>15</Value>
+        </Operand>
+      </Expression>
+      <Expression xsi:type="rx:ReplaySubject">
+        <Name>Poke Left</Name>
+        <rx:BufferSize xsi:nil="true" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:WithLatestFrom" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="ard:AnalogInput">
+          <ard:PortName>Arduino Mega 2560</ard:PortName>
+          <ard:Pin>8</ard:Pin>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="LessThan">
+        <Operand xsi:type="IntProperty">
+          <Value>15</Value>
+        </Operand>
+      </Expression>
+      <Expression xsi:type="rx:ReplaySubject">
+        <Name>Poke Right</Name>
+        <rx:BufferSize xsi:nil="true" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:WithLatestFrom" />
+      </Expression>
+      <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:Smooth">
           <cv:SmoothType>Gaussian</cv:SmoothType>
           <cv:Size1>27</cv:Size1>
@@ -269,51 +313,7 @@ def process(value):
         <Selector>Y</Selector>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="cv:ConvertColor">
-          <cv:Conversion>Gray2Bgr</cv:Conversion>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:Zip" />
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:AnalogInput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>0</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="LessThan">
-        <Operand xsi:type="IntProperty">
-          <Value>15</Value>
-        </Operand>
-      </Expression>
-      <Expression xsi:type="rx:AsyncSubject">
-        <Name>Poke Left</Name>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:AnalogInput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>8</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="LessThan">
-        <Operand xsi:type="IntProperty">
-          <Value>15</Value>
-        </Operand>
-      </Expression>
-      <Expression xsi:type="rx:AsyncSubject">
-        <Name>Poke Right</Name>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:SampleInterval">
-          <rx:Interval>PT0.1S</rx:Interval>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Clickbait Task</ipy:Name>
@@ -509,15 +509,15 @@ def process(value):
     withdrawal_duration = 0.5
 
     # Load realtime variables from Zip node
-    centroid_x, centroid_y, image = value[0].Item1, value[0].Item2, value[0].Item3
-    poke_left, poke_right = bool(value[1][0]), bool(value[1][1])
+    centroid_x, centroid_y, image = value.Item3, value.Item4, value.Item5
+    poke_left, poke_right = bool(value.Item1[1]), bool(value.Item2[1])
 
     # Process grid and canvas
     grid_loc_x, grid_loc_y = None, None
     img_dims = get_image_shape(image)
     grid = GridMaze(img_dims, [grid_cells_x, grid_cells_y])
     canvas = create_blank_canvas(img_dims[0], img_dims[1])
-    draw_grid(grid, canvas)
+    #draw_grid(grid, canvas)
     draw_targets(target_list, grid, canvas)
 
     if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
@@ -596,45 +596,55 @@ from OpenCV.Net import *
 def process(value):
   return value[1]</ipy:Script>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="dsp:Histogram2D">
-          <dsp:MinX>0</dsp:MinX>
-          <dsp:MaxX>894</dsp:MaxX>
-          <dsp:MinY>0</dsp:MinY>
-          <dsp:MaxY>1952</dsp:MaxY>
-          <dsp:BinsX>9</dsp:BinsX>
-          <dsp:BinsY>20</dsp:BinsY>
-          <dsp:Normalize>false</dsp:Normalize>
-          <dsp:Accumulate>true</dsp:Accumulate>
-        </Combinator>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="dsp:Histogram2D">
+            <dsp:MinX>0</dsp:MinX>
+            <dsp:MaxX>894</dsp:MaxX>
+            <dsp:MinY>0</dsp:MinY>
+            <dsp:MaxY>1952</dsp:MaxY>
+            <dsp:BinsX>9</dsp:BinsX>
+            <dsp:BinsY>20</dsp:BinsY>
+            <dsp:Normalize>false</dsp:Normalize>
+            <dsp:Accumulate>true</dsp:Accumulate>
+          </Combinator>
+        </Builder>
       </Expression>
-      <Expression xsi:type="rx:Visualizer">
-        <Description />
-        <Workflow>
-          <Nodes>
-            <Expression xsi:type="WorkflowInput">
-              <Name>Source1</Name>
-            </Expression>
-            <Expression xsi:type="WorkflowOutput" />
-          </Nodes>
-          <Edges>
-            <Edge From="0" To="1" Label="Source1" />
-          </Edges>
-        </Workflow>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="rx:Visualizer">
+          <Description />
+          <Workflow>
+            <Nodes>
+              <Expression xsi:type="WorkflowInput">
+                <Name>Source1</Name>
+              </Expression>
+              <Expression xsi:type="WorkflowOutput" />
+            </Nodes>
+            <Edges>
+              <Edge From="0" To="1" Label="Source1" />
+            </Edges>
+          </Workflow>
+        </Builder>
       </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>HistogramFilename</Name>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="SubscribeSubject">
+          <Name>HistogramFilename</Name>
+        </Builder>
       </Expression>
-      <Expression xsi:type="PropertyMapping">
-        <PropertyMappings>
-          <Property Name="FileName" />
-        </PropertyMappings>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="PropertyMapping">
+          <PropertyMappings>
+            <Property Name="FileName" />
+          </PropertyMappings>
+        </Builder>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="cv:SaveImage">
-          <cv:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_occupancy.jpg</cv:FileName>
-          <cv:Suffix>None</cv:Suffix>
-        </Combinator>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="cv:SaveImage">
+            <cv:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_occupancy.jpg</cv:FileName>
+            <cv:Suffix>None</cv:Suffix>
+          </Combinator>
+        </Builder>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Trial Count</ipy:Name>
@@ -690,7 +700,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_eventsA.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_eventsA.csv</io:FileName>
         <io:Delimiter>,</io:Delimiter>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
@@ -814,7 +824,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="io:WriteAllText">
-          <io:Path>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_trialcounts.txt</io:Path>
+          <io:Path>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_trialcounts.txt</io:Path>
           <io:Overwrite>true</io:Overwrite>
           <io:Append>false</io:Append>
         </Combinator>
@@ -831,11 +841,45 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_eventsB.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_eventsB.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
         <io:IncludeHeader>true</io:IncludeHeader>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="rx:TimeInterval" />
+        </Builder>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="MemberSelector">
+          <Selector>Interval.Milliseconds</Selector>
+        </Builder>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="rx:TimeInterval" />
+        </Builder>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="MemberSelector">
+          <Selector>Interval.Milliseconds</Selector>
+        </Builder>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="PropertyMapping">
+          <PropertyMappings>
+            <Property Name="Value" />
+          </PropertyMappings>
+        </Builder>
+      </Expression>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Equal">
+          <Operand xsi:type="IntProperty">
+            <Value>20</Value>
+          </Operand>
+        </Builder>
       </Expression>
       <Expression xsi:type="GroupWorkflow">
         <Name>Filename Definitions</Name>
@@ -1266,7 +1310,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>1006</Value>
+                <Value>nate-test</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1377,12 +1421,13 @@ def generate():
       <Edge From="2" To="3" Label="Source1" />
       <Edge From="3" To="4" Label="Source2" />
       <Edge From="5" To="6" Label="Source1" />
+      <Edge From="5" To="85" Label="Source1" />
       <Edge From="6" To="7" Label="Source1" />
       <Edge From="7" To="8" Label="Source1" />
       <Edge From="8" To="9" Label="Source1" />
       <Edge From="9" To="12" Label="Source1" />
       <Edge From="9" To="23" Label="Source1" />
-      <Edge From="9" To="32" Label="Source1" />
+      <Edge From="9" To="33" Label="Source1" />
       <Edge From="10" To="11" Label="Source1" />
       <Edge From="11" To="12" Label="Source2" />
       <Edge From="12" To="13" Label="Source1" />
@@ -1396,25 +1441,28 @@ def generate():
       <Edge From="20" To="21" Label="Source1" />
       <Edge From="21" To="22" Label="Source1" />
       <Edge From="23" To="24" Label="Source1" />
-      <Edge From="24" To="25" Label="Source1" />
+      <Edge From="23" To="42" Label="Source5" />
+      <Edge From="24" To="28" Label="Source1" />
+      <Edge From="24" To="32" Label="Source2" />
       <Edge From="25" To="26" Label="Source1" />
       <Edge From="26" To="27" Label="Source1" />
-      <Edge From="27" To="28" Label="Source1" />
-      <Edge From="28" To="29" Label="Source1" />
+      <Edge From="27" To="28" Label="Source2" />
+      <Edge From="28" To="42" Label="Source1" />
+      <Edge From="28" To="83" Label="Source1" />
       <Edge From="29" To="30" Label="Source1" />
-      <Edge From="29" To="31" Label="Source1" />
-      <Edge From="30" To="33" Label="Source1" />
-      <Edge From="31" To="33" Label="Source2" />
-      <Edge From="32" To="33" Label="Source3" />
-      <Edge From="33" To="42" Label="Source1" />
+      <Edge From="30" To="31" Label="Source1" />
+      <Edge From="31" To="32" Label="Source1" />
+      <Edge From="32" To="42" Label="Source2" />
+      <Edge From="33" To="34" Label="Source1" />
       <Edge From="34" To="35" Label="Source1" />
       <Edge From="35" To="36" Label="Source1" />
-      <Edge From="36" To="40" Label="Source1" />
+      <Edge From="36" To="37" Label="Source1" />
       <Edge From="37" To="38" Label="Source1" />
       <Edge From="38" To="39" Label="Source1" />
-      <Edge From="39" To="40" Label="Source2" />
-      <Edge From="40" To="41" Label="Source1" />
-      <Edge From="41" To="42" Label="Source2" />
+      <Edge From="39" To="40" Label="Source1" />
+      <Edge From="39" To="41" Label="Source1" />
+      <Edge From="40" To="42" Label="Source3" />
+      <Edge From="41" To="42" Label="Source4" />
       <Edge From="42" To="43" Label="Source1" />
       <Edge From="43" To="44" Label="Source1" />
       <Edge From="43" To="45" Label="Source1" />
@@ -1466,6 +1514,11 @@ def generate():
       <Edge From="79" To="82" Label="Source1" />
       <Edge From="80" To="81" Label="Source1" />
       <Edge From="81" To="82" Label="Source2" />
+      <Edge From="83" To="84" Label="Source1" />
+      <Edge From="84" To="88" Label="Source1" />
+      <Edge From="85" To="86" Label="Source1" />
+      <Edge From="86" To="87" Label="Source1" />
+      <Edge From="87" To="88" Label="Source2" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
