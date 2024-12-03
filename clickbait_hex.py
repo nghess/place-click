@@ -93,7 +93,7 @@ class HexGrid:
         return None
     
     def draw(self, image: np.ndarray, 
-            color: Tuple[int, int, int] = (0, 255, 0), 
+            color: Tuple[int, int, int] = (64, 64, 64), 
             thickness: int = 1) -> np.ndarray:
         """Draw the entire hexagonal grid."""
         for tile in self.tiles.values():
@@ -114,7 +114,7 @@ def draw_hexagon(image: np.ndarray,
                 thickness: int = 1) -> np.ndarray:
     """Draw a single hexagon."""
     points = create_hexagon_points(center, radius)
-    return cv2.polylines(image, [points], True, color, thickness)
+    return cv2.polylines(image, [points], True, color, thickness, lineType=cv2.LINE_AA)
 
 def point_in_hexagon(point: Tuple[float, float], 
                     hex_center: Tuple[float, float], 
@@ -124,41 +124,73 @@ def point_in_hexagon(point: Tuple[float, float],
     path = hex_points.reshape((-1, 1, 2))
     return cv2.pointPolygonTest(path, point, False) >= 0
 
-# Example usage with mouse interaction
-def mouse_callback(event, x, y, flags, param):
-    if event == cv2.EVENT_MOUSEMOVE:
-        img = param['base_img'].copy()
-        hex_tile = param['grid'].get_containing_hex((x, y))
-        
-        if hex_tile:
-            # Highlight the hexagon containing the mouse
-            draw_hexagon(img, hex_tile.center, param['grid'].hex_size, 
-                        (0, 0, 255), 2)
-            # Display the hexagon's index
-            cv2.putText(img, f"Hex {hex_tile.index}", (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        
-        cv2.imshow('Hex Grid', img)
 
-if __name__ == "__main__":
+def check_centroid_hex(cx, cy, param):
+    img = param['base_img'].copy()
+    hex_tile = param['grid'].get_containing_hex((cx, cy))
+    
+    if hex_tile:
+        # Create a mask for the hexagon
+        overlay = img.copy()
+        # Draw filled hexagon contain the centroid
+        points = create_hexagon_points(hex_tile.center, param['grid'].hex_size)
+        cv2.fillPoly(overlay, [points], (128, 128, 255), lineType=cv2.LINE_AA)
+        # Blend the overlay with the original image.
+        opacity = 0.25
+        cv2.addWeighted(overlay, opacity, img, 1-opacity, 0, img)
+    
+    return img
+
+
+# Load cv2 video capture
+video = cv2.VideoCapture('A:/neurodinner/skymouse_cropped.mp4')
+thresh = cv2.VideoCapture('A:/neurodinner/skymouse_cropped_threshold.mp4')
+
+while True:
+    ret, frame = video.read()
+    ret_thresh, frame_thresh = thresh.read()
+    if not ret:
+        break
+
+    
+    # Convert threshold frame to binary
+    frame_thresh = cv2.cvtColor(frame_thresh, cv2.COLOR_BGR2GRAY)
+    _, frame_thresh = cv2.threshold(frame_thresh, 128, 255, cv2.THRESH_BINARY)
+    # Invert binary image
+    frame_thresh = cv2.bitwise_not(frame_thresh)
+    # Expand binary image
+    kernel = np.ones((5, 5), np.uint8)
+    frame_thresh = cv2.dilate(frame_thresh, kernel, iterations=2)
+    # Erode binary image
+    frame_thresh = cv2.erode(frame_thresh, kernel, iterations=3)
+    
+    # Get largest connected component and find centroid
+    contours, _ = cv2.findContours(frame_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    largest_contour = max(contours, key=cv2.contourArea)
+    M = cv2.moments(largest_contour)
+    cx = int(M['m10'] / M['m00'])
+    cy = int(M['m01'] / M['m00'])
+
+    # Draw centroid
+    frame = cv2.circle(frame, (cx, cy), 5, (255, 255, 255), -1, lineType=cv2.LINE_AA)
+
     # Create a window and blank image
-    width, height = 800, 600
-    img = np.zeros((height, width, 3), dtype=np.uint8)
-    
+    width, height = frame.shape[0], frame.shape[1]
+
     # Create a hex grid centered in the window
-    grid = HexGrid(center=(width//2, height//2), radius=200, hex_size=30)
-    
+    grid = HexGrid(center=(width//2, height//2), radius=450, hex_size=50)
+
+    # Draw the hexagon containing the centroid
+    frame = check_centroid_hex(cx, cy, {'grid': grid, 'base_img': frame})
+
     # Draw the base grid
-    base_img = grid.draw(img.copy())
-    
-    # Set up mouse callback
-    cv2.namedWindow('Hex Grid')
-    cv2.setMouseCallback('Hex Grid', mouse_callback, 
-                        {'grid': grid, 'base_img': base_img})
-    
-    # Main loop
-    while True:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    base_img = grid.draw(frame.copy())
+
+
+
+    cv2.imshow('Hex Grid', base_img)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        cv2.destroyAllWindows()
+        break
             
-    cv2.destroyAllWindows()
