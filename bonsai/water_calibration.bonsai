@@ -40,7 +40,7 @@ def generate():
 
 @returns(bool)
 def process(value):
-  time.sleep(.05)
+  time.sleep(.051)
   return False
 </ipy:Script>
       </Expression>
@@ -98,7 +98,7 @@ def generate():
 
 @returns(bool)
 def process(value):
-  time.sleep(.046)
+  time.sleep(.051)
   return False
 </ipy:Script>
         </Builder>
