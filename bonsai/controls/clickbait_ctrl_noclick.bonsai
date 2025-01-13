@@ -74,7 +74,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="dsp:MatrixWriter">
-          <dsp:Path>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_daq.bin</dsp:Path>
+          <dsp:Path>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test_daq.bin</dsp:Path>
           <dsp:Suffix>None</dsp:Suffix>
           <dsp:Overwrite>true</dsp:Overwrite>
           <dsp:Layout>ColumnMajor</dsp:Layout>
@@ -118,7 +118,7 @@
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:VideoWriter">
-          <cv:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4.avi</cv:FileName>
+          <cv:FileName>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test.avi</cv:FileName>
           <cv:Suffix>None</cv:Suffix>
           <cv:Buffered>true</cv:Buffered>
           <cv:Overwrite>true</cv:Overwrite>
@@ -146,7 +146,7 @@
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_video_timestamp.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test_video_timestamp.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -206,7 +206,7 @@ def process(value):
     countdown = str("Time remaining: " + format_string.format(minutes=minutes, seconds=seconds))
 
     if minutes &lt;= 0 and seconds &lt;= 0:
-        focus_window("clickbait_task.bonsai")
+        focus_window("clickbait_ctrl_noclick.bonsai")
         countdown = "Time's up!"
         SendKeys.SendWait("+{F5}")
 
@@ -224,7 +224,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="cv:Threshold">
-          <cv:ThresholdValue>96</cv:ThresholdValue>
+          <cv:ThresholdValue>72</cv:ThresholdValue>
           <cv:MaxValue>255</cv:MaxValue>
           <cv:ThresholdType>Binary</cv:ThresholdType>
         </Combinator>
@@ -308,12 +308,7 @@ def process(value):
         <Combinator xsi:type="rx:CombineLatest" />
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:SampleInterval">
-          <rx:Interval>PT0.1S</rx:Interval>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:CombineLatest" />
+        <Combinator xsi:type="rx:WithLatestFrom" />
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Clickbait Task</ipy:Name>
@@ -407,8 +402,8 @@ def draw_targets(tgt_list, grid, img):
     CV.Rectangle(img, grid.cells[target][0], grid.cells[target][1], target_color, thickness=-1)
 
 # Here we define the number of grid cells to divide the arena by
-grid_x = 6
-grid_y = 13
+grid_x = 4
+grid_y = 9
 
 # And the number of search targets
 num_targets = 1
@@ -501,8 +496,8 @@ def process(value):
 
     # Timing-related vars
     current_time = time.time()
-    reward_duration_left = 0.05  # 0.046 seconds
-    reward_duration_right = 0.046
+    #reward_duration_left = 0.051  # 0.046 seconds
+    #reward_duration_right = 0.051
     click_duration = 0.05
     iti_duration_min = 1.0
     iti_duration_max = 5.0
@@ -517,7 +512,7 @@ def process(value):
     img_dims = get_image_shape(image)
     grid = GridMaze(img_dims, [grid_cells_x, grid_cells_y])
     canvas = create_blank_canvas(img_dims[0], img_dims[1])
-    draw_grid(grid, canvas)
+    #draw_grid(grid, canvas)
     draw_targets(target_list, grid, canvas)
 
     if not (math.isnan(centroid_x) or math.isnan(centroid_y)):
@@ -530,39 +525,42 @@ def process(value):
             trial_count += 1
             in_iti = False
             target_list = generate_targets(grid_x, grid_y, num_targets)[2]
-    elif in_withdrawal_period:
-        if not (poke_left or poke_right):  # Mouse has withdrawn
-            if current_time - withdrawal_start_time &gt;= withdrawal_duration:
-                in_withdrawal_period = False
-                in_iti = True
-                iti_start_time = current_time
-                iti_duration = random.uniform(iti_duration_min, iti_duration_max)
-        else:  # Mouse is still poking, reset withdrawal timer
-            withdrawal_start_time = current_time
-    elif reward_state:
-        if reward_left and current_time - reward_left_start_time &gt;= reward_duration_left:
-            reward_left = False
-            in_withdrawal_period = True
-            withdrawal_start_time = current_time
-            reward_state = False
-        elif reward_right and current_time - reward_right_start_time &gt;= reward_duration_right:
-            reward_right = False
-            in_withdrawal_period = True
-            withdrawal_start_time = current_time
-            reward_state = False
-        elif poke_left and not reward_left and not reward_right:
-            reward_left = True
-            reward_left_count += 1
-            reward_left_start_time = current_time
-        elif poke_right and not reward_right and not reward_left:
-            reward_right = True
-            reward_right_count += 1
-            reward_right_start_time = current_time
+    # elif in_withdrawal_period:
+    #     if not (poke_left or poke_right):  # Mouse has withdrawn
+    #         if current_time - withdrawal_start_time &gt;= withdrawal_duration:
+    #             in_withdrawal_period = False
+    #             in_iti = True
+    #             iti_start_time = current_time
+    #             iti_duration = random.uniform(iti_duration_min, iti_duration_max)
+    #     else:  # Mouse is still poking, reset withdrawal timer
+    #         withdrawal_start_time = current_time
+    # elif reward_state:
+    #     if reward_left and current_time - reward_left_start_time &gt;= reward_duration_left:
+    #         reward_left = False
+    #         in_withdrawal_period = True
+    #         withdrawal_start_time = current_time
+    #         reward_state = False
+    #     elif reward_right and current_time - reward_right_start_time &gt;= reward_duration_right:
+    #         reward_right = False
+    #         in_withdrawal_period = True
+    #         withdrawal_start_time = current_time
+    #         reward_state = False
+    #     elif poke_left and not reward_left and not reward_right:
+    #         reward_left = True
+    #         reward_left_count += 1
+    #         reward_left_start_time = current_time
+    #     elif poke_right and not reward_right and not reward_left:
+    #         reward_right = True
+    #         reward_right_count += 1
+    #         reward_right_start_time = current_time
     else:
         if len(target_list) == 0:
-            reward_state = True
+            #reward_state = True
+            in_iti = True
             click = True
             click_start_time = current_time
+            iti_start_time = current_time
+            iti_duration = random.uniform(iti_duration_min, iti_duration_max)
 
     # Handle click duration
     if click and current_time - click_start_time &gt;= click_duration:
@@ -596,45 +594,55 @@ from OpenCV.Net import *
 def process(value):
   return value[1]</ipy:Script>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="dsp:Histogram2D">
-          <dsp:MinX>0</dsp:MinX>
-          <dsp:MaxX>894</dsp:MaxX>
-          <dsp:MinY>0</dsp:MinY>
-          <dsp:MaxY>1952</dsp:MaxY>
-          <dsp:BinsX>9</dsp:BinsX>
-          <dsp:BinsY>20</dsp:BinsY>
-          <dsp:Normalize>false</dsp:Normalize>
-          <dsp:Accumulate>true</dsp:Accumulate>
-        </Combinator>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="dsp:Histogram2D">
+            <dsp:MinX>0</dsp:MinX>
+            <dsp:MaxX>894</dsp:MaxX>
+            <dsp:MinY>0</dsp:MinY>
+            <dsp:MaxY>1952</dsp:MaxY>
+            <dsp:BinsX>9</dsp:BinsX>
+            <dsp:BinsY>20</dsp:BinsY>
+            <dsp:Normalize>false</dsp:Normalize>
+            <dsp:Accumulate>true</dsp:Accumulate>
+          </Combinator>
+        </Builder>
       </Expression>
-      <Expression xsi:type="rx:Visualizer">
-        <Description />
-        <Workflow>
-          <Nodes>
-            <Expression xsi:type="WorkflowInput">
-              <Name>Source1</Name>
-            </Expression>
-            <Expression xsi:type="WorkflowOutput" />
-          </Nodes>
-          <Edges>
-            <Edge From="0" To="1" Label="Source1" />
-          </Edges>
-        </Workflow>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="rx:Visualizer">
+          <Description />
+          <Workflow>
+            <Nodes>
+              <Expression xsi:type="WorkflowInput">
+                <Name>Source1</Name>
+              </Expression>
+              <Expression xsi:type="WorkflowOutput" />
+            </Nodes>
+            <Edges>
+              <Edge From="0" To="1" Label="Source1" />
+            </Edges>
+          </Workflow>
+        </Builder>
       </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>HistogramFilename</Name>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="SubscribeSubject">
+          <Name>HistogramFilename</Name>
+        </Builder>
       </Expression>
-      <Expression xsi:type="PropertyMapping">
-        <PropertyMappings>
-          <Property Name="FileName" />
-        </PropertyMappings>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="PropertyMapping">
+          <PropertyMappings>
+            <Property Name="FileName" />
+          </PropertyMappings>
+        </Builder>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="cv:SaveImage">
-          <cv:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_occupancy.jpg</cv:FileName>
-          <cv:Suffix>None</cv:Suffix>
-        </Combinator>
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="cv:SaveImage">
+            <cv:FileName>D:\clickbait\data\no_implant\nate-test\full5\11222024_nate-test_full5_occupancy.jpg</cv:FileName>
+            <cv:Suffix>None</cv:Suffix>
+          </Combinator>
+        </Builder>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Trial Count</ipy:Name>
@@ -690,7 +698,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_eventsA.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test_eventsA.csv</io:FileName>
         <io:Delimiter>,</io:Delimiter>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
@@ -768,40 +776,21 @@ def process(value):
 def process(value):
   return value[9]</ipy:Script>
       </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="ard:DigitalOutput">
-          <ard:PortName>Arduino Mega 2560</ard:PortName>
-          <ard:Pin>12</ard:Pin>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Reward Right Count</ipy:Name>
-        <ipy:Script># Get reward left count
-
-@returns(int)
-def process(value):
-  return value[-1]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="ipy:PythonTransform">
-        <ipy:Name>Reward Left Count</ipy:Name>
-        <ipy:Script># Get reward left count
-
-@returns(int)
-def process(value):
-  return value[-2]</ipy:Script>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="rx:Zip" />
+      <Expression xsi:type="Disable">
+        <Builder xsi:type="Combinator">
+          <Combinator xsi:type="ard:DigitalOutput">
+            <ard:PortName>Arduino Mega 2560</ard:PortName>
+            <ard:Pin>12</ard:Pin>
+          </Combinator>
+        </Builder>
       </Expression>
       <Expression xsi:type="ipy:PythonTransform">
         <ipy:Name>Combine Trial Counts</ipy:Name>
         <ipy:Description />
         <ipy:Script>@returns(str)
 def process(value):
-  reward_r = str(value.Item1)
-  reward_l = str(value.Item2)
-  total = str(value.Item1 + value.Item2)
-  trial_info = "Left: " + reward_l + " Right: " + reward_r + " Total: " + total
+  total = str(value[-3])
+  trial_info = total
   return trial_info</ipy:Script>
       </Expression>
       <Expression xsi:type="SubscribeSubject">
@@ -814,7 +803,7 @@ def process(value):
       </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="io:WriteAllText">
-          <io:Path>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_trialcounts.txt</io:Path>
+          <io:Path>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test_trialcounts.txt</io:Path>
           <io:Overwrite>true</io:Overwrite>
           <io:Append>false</io:Append>
         </Combinator>
@@ -831,7 +820,7 @@ def process(value):
         </PropertyMappings>
       </Expression>
       <Expression xsi:type="io:CsvWriter">
-        <io:FileName>D:\clickbait\data\no_implant\nate-test\full4\11212024_nate-test_full4_eventsB.csv</io:FileName>
+        <io:FileName>D:\clickbait\data\no_implant\1005\ctrl_test\12092024_1005_ctrl_test_eventsB.csv</io:FileName>
         <io:Append>false</io:Append>
         <io:Overwrite>true</io:Overwrite>
         <io:Suffix>None</io:Suffix>
@@ -1209,7 +1198,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>11222024</Value>
+                <Value>01112025</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1266,7 +1255,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>1006</Value>
+                <Value>1010</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1290,7 +1279,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>full5</Value>
+                <Value>ctrl_none_lite3</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1406,66 +1395,60 @@ def generate():
       <Edge From="30" To="33" Label="Source1" />
       <Edge From="31" To="33" Label="Source2" />
       <Edge From="32" To="33" Label="Source3" />
-      <Edge From="33" To="42" Label="Source1" />
+      <Edge From="33" To="41" Label="Source1" />
       <Edge From="34" To="35" Label="Source1" />
       <Edge From="35" To="36" Label="Source1" />
       <Edge From="36" To="40" Label="Source1" />
       <Edge From="37" To="38" Label="Source1" />
       <Edge From="38" To="39" Label="Source1" />
       <Edge From="39" To="40" Label="Source2" />
-      <Edge From="40" To="41" Label="Source1" />
-      <Edge From="41" To="42" Label="Source2" />
+      <Edge From="40" To="41" Label="Source2" />
+      <Edge From="41" To="42" Label="Source1" />
       <Edge From="42" To="43" Label="Source1" />
-      <Edge From="43" To="44" Label="Source1" />
-      <Edge From="43" To="45" Label="Source1" />
-      <Edge From="43" To="51" Label="Source1" />
-      <Edge From="43" To="52" Label="Source1" />
-      <Edge From="43" To="54" Label="Source1" />
-      <Edge From="43" To="55" Label="Source1" />
-      <Edge From="43" To="56" Label="Source1" />
-      <Edge From="43" To="61" Label="Source1" />
-      <Edge From="43" To="63" Label="Source1" />
-      <Edge From="43" To="66" Label="Source1" />
-      <Edge From="43" To="68" Label="Source1" />
-      <Edge From="43" To="70" Label="Source1" />
-      <Edge From="43" To="72" Label="Source1" />
-      <Edge From="43" To="73" Label="Source1" />
+      <Edge From="42" To="44" Label="Source1" />
+      <Edge From="42" To="50" Label="Source1" />
+      <Edge From="42" To="51" Label="Source1" />
+      <Edge From="42" To="53" Label="Source1" />
+      <Edge From="42" To="54" Label="Source1" />
+      <Edge From="42" To="55" Label="Source1" />
+      <Edge From="42" To="60" Label="Source1" />
+      <Edge From="42" To="62" Label="Source1" />
+      <Edge From="42" To="65" Label="Source1" />
+      <Edge From="42" To="67" Label="Source1" />
+      <Edge From="42" To="69" Label="Source1" />
+      <Edge From="42" To="71" Label="Source2" />
+      <Edge From="44" To="45" Label="Source1" />
+      <Edge From="44" To="56" Label="Source5" />
       <Edge From="45" To="46" Label="Source1" />
-      <Edge From="45" To="57" Label="Source5" />
-      <Edge From="46" To="47" Label="Source1" />
-      <Edge From="47" To="50" Label="Source1" />
-      <Edge From="48" To="49" Label="Source1" />
-      <Edge From="49" To="50" Label="Source2" />
-      <Edge From="51" To="57" Label="Source1" />
-      <Edge From="51" To="74" Label="Source3" />
-      <Edge From="52" To="53" Label="Source1" />
-      <Edge From="53" To="57" Label="Source2" />
-      <Edge From="54" To="57" Label="Source3" />
-      <Edge From="55" To="57" Label="Source4" />
-      <Edge From="56" To="57" Label="Source6" />
-      <Edge From="57" To="60" Label="Source1" />
-      <Edge From="58" To="59" Label="Source1" />
-      <Edge From="59" To="60" Label="Source2" />
-      <Edge From="61" To="62" Label="Source1" />
-      <Edge From="61" To="79" Label="Source1" />
-      <Edge From="63" To="64" Label="Source1" />
-      <Edge From="63" To="65" Label="Source1" />
-      <Edge From="63" To="79" Label="Source2" />
-      <Edge From="66" To="67" Label="Source1" />
-      <Edge From="66" To="79" Label="Source3" />
-      <Edge From="68" To="69" Label="Source1" />
-      <Edge From="68" To="79" Label="Source4" />
-      <Edge From="70" To="71" Label="Source1" />
-      <Edge From="70" To="79" Label="Source5" />
-      <Edge From="72" To="74" Label="Source1" />
+      <Edge From="46" To="49" Label="Source1" />
+      <Edge From="47" To="48" Label="Source1" />
+      <Edge From="48" To="49" Label="Source2" />
+      <Edge From="50" To="56" Label="Source1" />
+      <Edge From="51" To="52" Label="Source1" />
+      <Edge From="52" To="56" Label="Source2" />
+      <Edge From="53" To="56" Label="Source3" />
+      <Edge From="54" To="56" Label="Source4" />
+      <Edge From="55" To="56" Label="Source6" />
+      <Edge From="56" To="59" Label="Source1" />
+      <Edge From="57" To="58" Label="Source1" />
+      <Edge From="58" To="59" Label="Source2" />
+      <Edge From="60" To="61" Label="Source1" />
+      <Edge From="60" To="75" Label="Source1" />
+      <Edge From="62" To="63" Label="Source1" />
+      <Edge From="62" To="64" Label="Source1" />
+      <Edge From="62" To="75" Label="Source2" />
+      <Edge From="65" To="66" Label="Source1" />
+      <Edge From="65" To="75" Label="Source3" />
+      <Edge From="67" To="68" Label="Source1" />
+      <Edge From="67" To="75" Label="Source4" />
+      <Edge From="69" To="70" Label="Source1" />
+      <Edge From="69" To="75" Label="Source5" />
+      <Edge From="71" To="74" Label="Source1" />
+      <Edge From="72" To="73" Label="Source1" />
       <Edge From="73" To="74" Label="Source2" />
-      <Edge From="74" To="75" Label="Source1" />
       <Edge From="75" To="78" Label="Source1" />
       <Edge From="76" To="77" Label="Source1" />
       <Edge From="77" To="78" Label="Source2" />
-      <Edge From="79" To="82" Label="Source1" />
-      <Edge From="80" To="81" Label="Source1" />
-      <Edge From="81" To="82" Label="Source2" />
     </Edges>
   </Workflow>
 </WorkflowBuilder>
