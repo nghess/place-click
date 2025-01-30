@@ -1271,7 +1271,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>1005</Value>
+                <Value>test</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
@@ -1283,7 +1283,7 @@ def generate():
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="StringProperty">
-                <Value>no_implant</Value>
+                <Value>ardtest_no_implant</Value>
               </Combinator>
             </Expression>
             <Expression xsi:type="rx:ReplaySubject">
